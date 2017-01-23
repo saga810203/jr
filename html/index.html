@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+	<script>
+        var keys =[];
+        keys.push(false);
+        keys.push(true);
+        keys.push(0);
+        keys.push(1);
+        keys.push(0.0);
+        keys.push(1.0);
+        keys.push("");
+        keys.push(null);
+        keys.push(undefined);
+        keys.push(" ");
+        keys.push(NaN);
+        keys.push("Http://loca/dfs.dfsa/dfs.//fd.././../ddddddddddddddddddd");
+        var o ={};
+        for(var i = 0 ; i < keys.length ; ++i){
+        	console.log(""+i+( typeof keys[i]))
+        	o[keys[i]] = true;
+        	
+        	console.log(o);
+        	console.log(JSON.stringify(o))
+        }
+        var k =1;
+        for(var key in o){
+        	console.log(""+(k++)+( typeof key)+"===="+key);
+        }
+		
+		
+		
+	</script>
+</html>
