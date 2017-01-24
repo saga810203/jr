@@ -6,5 +6,15 @@
 	</head>
 	<body>
 		<input type="text" placeholder="" />
+		<div required dataType=1></div>
 	</body>
+	<script type="text/javascript" src="js/jquery-1.12.4.js"></script>
+	<script>
+		$(function(){
+			console.log("r==="+$("div").attr("required"));
+			console.log("r+++"+$("div").prop("required"));
+		    console.log("d==="+$("div").attr("dataType"));
+			console.log("d+++"+$("div").prop("dataType"));
+		});
+	</script>
 </html>
