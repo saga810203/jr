@@ -8,6 +8,9 @@ function($) {
 		READONLY_CSS = "readOnly",
 		SHOWONLY_CSS = "showOnly",
 		TRIMED_CSS = "trimed",
+		DROP_DOWN_CONTAINER_CSS=".dd-ctn",
+		DROP_DOWN_BACKGROUP_CSS=".dd-bg",
+		OPEN_CSS="open",
 
 		EMPTY_STR = "",
 		FORM_ITEM_DATA_TYPE_STRING = 0,
@@ -69,6 +72,40 @@ function($) {
 	Util.confirmMsg = function(cnt, yesHandler, noHandler) {};
 
 	Util.loadScript = function(url) {};
+	
+	//DropDown
+	Util.dd_clearMenus=function(e){
+		if (e && e.which === 3) return
+		$(DROP_DOWN_BACKGROUP_CSS).remove()
+	    $(DROP_DOWN_CONTAINER_CSS).each(function () {
+	      var $this         = $(this)
+	      var relatedTarget = { relatedTarget: this }
+	      if (!$this.hasClass('open')) return
+	      $this.trigger(e = $.Event('hide.jr.dropdown', relatedTarget))
+	      if (e.isDefaultPrevented()) return
+	      $this.removeClass(OPEN_CSS).trigger('hidden.jr.dropdown', relatedTarget)
+	    });	
+	}
+	//DropDown
+	Util.dd_toggle=function(e){
+		 var $this = $(this);
+		 var $ddc = $this.parents(DROP_DOWN_CONTAINER_CSS);
+		 if(!$ddc.length) return;
+		 if ($ddc.is('.disabled, :disabled')) return;
+		 var isActive = $ddc.hasClass(OPEN_CSS);
+		 Util.dd_clearMenus();
+		 if (!isActive) {
+			  var relatedTarget = { relatedTarget: this }
+			  $ddc.trigger(e = $.Event('show.jr.dropdown', relatedTarget))
+			  if (e.isDefaultPrevented()) return			
+			  $ddc.toggleClass('open').trigger('shown.jr.dropdown', relatedTarget)
+		 }
+		 return false
+	}
+
+	
+	
+	
 
 	var _dictCache = {};
 	var _dictHandleCache = {};
@@ -95,39 +132,35 @@ function($) {
 				}
 			}
 		}
-	Dict.ref
+	Dict.refresh(dictCode,handler){
+		if(handler){
+			var hs = _dictHandleCache[dictCode];
+			if(!hs){
+				_dictHandlerCache[dictCode] = hs =[];
+			}
+			hs.push(handler);
+		}
+		var dict = _dictCache[dictCode];
+		if(dict){
+			delete _dictCache[dictCode];
+			Util.loadScript(Dict.baseUri + dictCode + ".js");
+		}	
+	}
 		/*
 		 * content:[{code:"12345",caption:"",shortCode:"",enabled:true,children:[{code:"",catpion:"",enabled:true,children:[]]}},....]
 		 * 
 		 */
 	Dict.define = function(dictCode, content,dynamic) {
-		if(dynamic){
-			for(var i=0 ; i < length)
-			
-			
+		if(!dynamic){
+			_dictCache[dictCode] = dictCache[dictCode] || content;
+
 		}
-		
-		var dict = _dictCache[dictCode];
-		if(!dict) {
-			_dictCache[dictCode] = dict = content;
-			dict.loaded = true;
-		} else {
-			if(dict.loaded) {
-				if(force) {
-					_dictCache[dictCode] = dict = content;
-					dict.loaded = true;
-				}
-			} else {
-				var hs = dict[handerArray];
-				_dictCache[dictCode] = dict = content;
-				dict.loaded = true;
-				if(hs) {
-					for(var i = 0; i < hs.length; ++i) {
-						hs[i](dict);
-					}
-					delete dict[handerArray];
-				}
+		var handlers = _dictHandleCache[dictCode];
+		if(handlers && handlers.length>0){
+			for(var i=0; i< handlers.length;++i){
+				handlers[i](content);
 			}
+			delete _dictHandleCache[dictCode];
 		}
 	}
 	Dict.get = function(dict, code) {
@@ -136,9 +169,11 @@ function($) {
 			if(code === item.code) {
 				return item.caption;
 			} else if(item.children && item.children.length) {
-
+				var ret = Dict.get(item.children);
+				if(ret) return ret;
 			}
 		}
+		return false;
 	}
 
 	/*
@@ -253,6 +288,7 @@ function($) {
 	Jselect.build = function(ele) {
 		return ele.hasClass("select") ? new Jselect(ele) : false;
 	}
+	
 	$.extend(Jselect.prototype, {
 		render: function() {
 			this.codeEle = $("<input type='hidden'>");
@@ -261,7 +297,8 @@ function($) {
 				if(this.defVal) {
 					Dict.apply(this.dictCode, (function(that) {
 						return function(dict) {
-
+							that.ele.find("input").val(that.defVal);
+							that.ele.find(".select-caption").html(Dict.get(dict,that.defVal))
 						};
 					})(this));
 				}
