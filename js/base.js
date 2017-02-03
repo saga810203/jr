@@ -1,16 +1,26 @@
 ;
 
-function($) {
+function($,global) {
 	'use strict';
+	if(!global.jr){
+		global.jr={version: "1.0.0"};
+	}
+	if(global.jr.base){
+		return;
+	}
+	var base = global.jr.base={};
+	
+	
 	var FORM_ITEM_CSS = ".form-item",
 		FORM_ITEM_VALUE_CSS = ".form-item-val",
 		FORM_ITEM_VALUE_CACHE_KEY = "form_item_value",
 		READONLY_CSS = "readOnly",
 		SHOWONLY_CSS = "showOnly",
 		TRIMED_CSS = "trimed",
-		DROP_DOWN_CONTAINER_CSS=".dd-ctn",
-		DROP_DOWN_BACKGROUP_CSS=".dd-bg",
-		OPEN_CSS="open",
+		DISABLED = "disabled",
+	    DROP_DOWN_CONTAINER_CSS = ".dd-ctn",
+		DROP_DOWN_BACKGROUP_CSS = ".dd-bg",
+		OPEN_CSS = "open",
 
 		EMPTY_STR = "",
 		FORM_ITEM_DATA_TYPE_STRING = 0,
@@ -32,7 +42,7 @@ function($) {
 		},
 		noop: function() {};
 
-	var Util = {};
+	var Util =base.Util={};
 
 	/*
 	 * parent is body z-index = 9999999
@@ -72,92 +82,92 @@ function($) {
 	Util.confirmMsg = function(cnt, yesHandler, noHandler) {};
 
 	Util.loadScript = function(url) {};
-	
-	//DropDown
-	Util.dd_clearMenus=function(e){
-		if (e && e.which === 3) return
-		$(DROP_DOWN_BACKGROUP_CSS).remove()
-	    $(DROP_DOWN_CONTAINER_CSS).each(function () {
-	      var $this         = $(this)
-	      var relatedTarget = { relatedTarget: this }
-	      if (!$this.hasClass('open')) return
-	      $this.trigger(e = $.Event('hide.jr.dropdown', relatedTarget))
-	      if (e.isDefaultPrevented()) return
-	      $this.removeClass(OPEN_CSS).trigger('hidden.jr.dropdown', relatedTarget)
-	    });	
-	}
-	//DropDown
-	Util.dd_toggle=function(e){
-		 var $this = $(this);
-		 var $ddc = $this.parents(DROP_DOWN_CONTAINER_CSS);
-		 if(!$ddc.length) return;
-		 if ($ddc.is('.disabled, :disabled')) return;
-		 var isActive = $ddc.hasClass(OPEN_CSS);
-		 Util.dd_clearMenus();
-		 if (!isActive) {
-			  var relatedTarget = { relatedTarget: this }
-			  $ddc.trigger(e = $.Event('show.jr.dropdown', relatedTarget))
-			  if (e.isDefaultPrevented()) return			
-			  $ddc.toggleClass('open').trigger('shown.jr.dropdown', relatedTarget)
-		 }
-		 return false
-	}
 
-	
-	
-	
+	//DropDown
+	Util.dd_clearMenus = function(e) {
+			if(e && e.which === 3) return
+			$(DROP_DOWN_BACKGROUP_CSS).remove()
+			$(DROP_DOWN_CONTAINER_CSS).each(function() {
+				var $this = $(this)
+				var relatedTarget = {
+					relatedTarget: this
+				}
+				if(!$this.hasClass('open')) return
+				$this.trigger(e = $.Event('hide.jr.dropdown', relatedTarget))
+				if(e.isDefaultPrevented()) return
+				$this.removeClass(OPEN_CSS).trigger('hidden.jr.dropdown', relatedTarget)
+			});
+		}
+		//DropDown
+	Util.dd_toggle = function(e) {
+		var $this = $(this);
+		var $ddc = $this.parents(DROP_DOWN_CONTAINER_CSS);
+		if(!$ddc.length) return;
+		if($ddc.is('.disabled, :disabled')) return;
+		var isActive = $ddc.hasClass(OPEN_CSS);
+		Util.dd_clearMenus();
+		if(!isActive) {
+			var relatedTarget = {
+				relatedTarget: this
+			}
+			$ddc.trigger(e = $.Event('show.jr.dropdown', relatedTarget))
+			if(e.isDefaultPrevented()) return
+			$ddc.toggleClass('open').trigger('shown.jr.dropdown', relatedTarget)
+		}
+		return false
+	}
 
 	var _dictCache = {};
 	var _dictHandleCache = {};
 	var _dictGuid = 1;
 	var handerArray = "handlers";
-	var Dict = {};
+	var Dict = global.jr.base.Dict = {};
 	Dict.baseUri = "";
 	Dict.apply = function(dictCode, handler, dynamic) {
-			if(dynamic) {
-				var pt = Math.random().replace(/\D/g, "") + (++_dictGuid);
-				_dictHandleCache[pt] = [handler];
-				Util.loadScript(dictCode+"?dictFlag="+pt);
-			} else {
-				var dict = _dictCache[dictCode];
-				if(!dict) {
-					var hs = _dictHandleCache[dictCode];
-					if(!hs){
-						_dictHandleCache[dictCode]=hs=[];
-					}
-					hs.push(handler);					
-					Util.loadScript(Dict.baseUri + dictCode + ".js");
-				}else{
-					handler(dict);
+		if(dynamic) {
+			var pt = Math.random().replace(/\D/g, "") + (++_dictGuid);
+			_dictHandleCache[pt] = [handler];
+			Util.loadScript(dictCode + "?dictFlag=" + pt);
+		} else {
+			var dict = _dictCache[dictCode];
+			if(!dict) {
+				var hs = _dictHandleCache[dictCode];
+				if(!hs) {
+					_dictHandleCache[dictCode] = hs = [];
 				}
+				hs.push(handler);
+				Util.loadScript(Dict.baseUri + dictCode + ".js");
+			} else {
+				handler(dict);
 			}
 		}
-	Dict.refresh(dictCode,handler){
-		if(handler){
-			var hs = _dictHandleCache[dictCode];
-			if(!hs){
-				_dictHandlerCache[dictCode] = hs =[];
-			}
-			hs.push(handler);
-		}
-		var dict = _dictCache[dictCode];
-		if(dict){
-			delete _dictCache[dictCode];
-			Util.loadScript(Dict.baseUri + dictCode + ".js");
-		}	
 	}
+	Dict.refresh(dictCode, handler) {
+			if(handler) {
+				var hs = _dictHandleCache[dictCode];
+				if(!hs) {
+					_dictHandlerCache[dictCode] = hs = [];
+				}
+				hs.push(handler);
+			}
+			var dict = _dictCache[dictCode];
+			if(dict) {
+				delete _dictCache[dictCode];
+				Util.loadScript(Dict.baseUri + dictCode + ".js");
+			}
+		}
 		/*
 		 * content:[{code:"12345",caption:"",shortCode:"",enabled:true,children:[{code:"",catpion:"",enabled:true,children:[]]}},....]
 		 * 
 		 */
-	Dict.define = function(dictCode, content,dynamic) {
-		if(!dynamic){
+	Dict.define = function(dictCode, content, dynamic) {
+		if(!dynamic) {
 			_dictCache[dictCode] = dictCache[dictCode] || content;
 
 		}
 		var handlers = _dictHandleCache[dictCode];
-		if(handlers && handlers.length>0){
-			for(var i=0; i< handlers.length;++i){
+		if(handlers && handlers.length) {
+			for(var i = 0; i < handlers.length; ++i) {
 				handlers[i](content);
 			}
 			delete _dictHandleCache[dictCode];
@@ -169,11 +179,37 @@ function($) {
 			if(code === item.code) {
 				return item.caption;
 			} else if(item.children && item.children.length) {
-				var ret = Dict.get(item.children);
+				var ret = Dict.get(item.children, code);
 				if(ret) return ret;
 			}
 		}
 		return false;
+	}
+	Dict.buildSelectDrop(dict) {
+		var $ul = $("<ul class='select-ul'></ul>");
+		for(var i = 0; i < dict.length; ++i) {
+			var item = dict[i];
+			if(this.filter) {
+				if(this.filter(item)) {
+					var $li = $("<li class='select-item'></li>");
+					if(!item.enabled) $li.addClass(DISABLED);
+					var $in = $("<input type='hidden'/>");
+					$in.val(item.code);
+					$li.html(item.caption);
+					$li.append($in);
+					$li.appendTo($ul);
+				}
+			} else {
+				var $li = $("<li class='select-item'></li>");
+				if(!item.enabled) $li.addClass(DISABLED);
+				var $in = $("<input type='hidden'/>");
+				$in.val(item.code);
+				$li.html(item.caption);
+				$li.append($in);
+				$li.appendTo($ul);
+			}
+		}
+		this.selectItemEle.append($ul);
 	}
 
 	/*
@@ -194,11 +230,10 @@ function($) {
 				tmp = itemEle.attr("data");
 				formItemObj.dataType = parseInt(tmp);
 				if(isNan(formItemObj.dataType)) formItemObj.dataType = 0;
-			} catch {
+			} catch(err) {
 				formItemObj.dataType = 0;
 			}
 			formItemObj.ele = itemEle;
-
 		},
 		Jhidden = function(ele) {
 			jinit(ele, this);
@@ -288,27 +323,86 @@ function($) {
 	Jselect.build = function(ele) {
 		return ele.hasClass("select") ? new Jselect(ele) : false;
 	}
-	
+
 	$.extend(Jselect.prototype, {
 		render: function() {
+			if(!this.ele.hasClass(DROP_DOWN_CONTAINER_CSS)) this.ele.addClass(DROP_DOWN_CONTAINER_CSS);
 			this.codeEle = $("<input type='hidden'>");
-			this.captionEle = $("<div class='select-caption'></div>");
-			if(this.showOnly) {
-				if(this.defVal) {
-					Dict.apply(this.dictCode, (function(that) {
-						return function(dict) {
-							that.ele.find("input").val(that.defVal);
-							that.ele.find(".select-caption").html(Dict.get(dict,that.defVal))
-						};
-					})(this));
-				}
-			} else {
-				this.valEle = $("<input type='text'/>");
-				var tmp = ctn.attr("placeholder");
-				if(tmp) this.valEle.attr("placeholder", tmp);
-				this.valEle.appendTo(this.ele);
+			this.captionEle = $("<a class='select-caption' href='javascript:void(0)'></a>");
+			this.ele.append(this.codeEle).append(this.captionEle);
+			if(this.defVal) {
+				Dict.apply(this.dictCode, (function(that) {
+					return function(dict) {
+						that.ele.find("input").val(that.defVal);
+						that.ele.find(".select-caption").html(Dict.get(dict, that.defVal))
+					};
+				})(this));
+			}
+			if((!this.readOnly) && (!this.showOnly)) {
+				this.selectItemEle = $("<div class='select-drop'><div class='select-loading'></div></div>");
+				this.selectItemEle.appendTo(this.ele);
+				Dict.apply(this.dictCode, (function(that) {
+					return function(dict) {
+						that.seelctItemEle.empty();
+						if(that.dropItem) {
+							that.dropItem.call(that, dict);
+						} else {
+							Dict.buildSelectDrop.call(that, dict);
+						}
+					}
+				})(this));
 			}
 		},
+		_setValue: function(val) {
+			Dict.apply(this.dictCode, (function(that) {
+				return function(dict) {
+					that.ele.find("input").val(val);
+					that.ele.find(".select-caption").html(Dict.get(dict, val))
+					if(that.afterValue) that.afterValue();
+				};
+			})(this));
+		},
+		setValue: function(val) {
+			if(typeof val === boolean) {
+				_setValue(val ? "1" : "0");
+			} else {
+				_setValue("" + val);
+			}
+		},
+		getValue: function() {
+			var val = this.codeEle.val();
+			if(val) {
+				if(this.dataType === FORM_ITEM_DATA_TYPE_STRING) {
+					return val;
+				} else if(this.dataType === FORM_ITEM_DATA_TYPE_BOOL) {
+					return '1' === val ? true : false;
+				} else if(this.dataType === FORM_ITEM_DATA_TYPE_INT) {
+					return parseInt(val);
+				} else if(this.dataType === FORM_ITEM_DATA_TYPE_FLOAT) {
+					return parseFloat(val);
+				}
+			}
+		},
+		setDropItem: function(handler) {
+			this.dropItem = handler;
+		},
+		setFilter: function(handler) {
+			this.filter = handler;
+		},
+		setAfterValue: function(handler) {
+			this.afterValue = handler;
+		}
 	});
 
-}(jQuery);
+
+	var Jform = function(ele){
+		
+	}
+
+    var form = global.jr.base.form=function(ele){
+    	ele.find(FORM_ITEM_CSS).each(fucntion(){
+    		var 
+    	})
+    };
+    
+}(jQuery,this);
