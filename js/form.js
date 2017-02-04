@@ -111,6 +111,7 @@ jr.define(["jQuery", "jhidden", "jtext"], function($, hidden, text) {
 			var data = form.data(FORM_VALUE_CACHE_KEY);
 			if(!data) {
 				form.data(FORM_VALUE_CACHE_KEY, (data = new Jform(form)));
+				data.render();
 			}
 			return data;
 		}

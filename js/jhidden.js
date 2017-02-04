@@ -1,5 +1,5 @@
 ;
-jr.define(["jQuery", "formBase"], function($, base) {
+jr.define(["jQuery"], function($, base) {
 	var Jhidden = function(ele) {
 		this.name = ele.attr("name") || ele.attr("id");
 		if(!this.name) {
