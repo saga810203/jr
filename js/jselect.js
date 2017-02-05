@@ -13,10 +13,17 @@ jr.define(["jQuery", "dict"], function($, dict) {
 			this.dictCode = ele.attr("dictCode");
 			this.ele = ele;
 			this.dv = ele.attr("defaultValue") || "";
-		},
-		changeValue = function(select, code, caption) {
+			this.isBool = ele.attr("bool");
+		},		
+		changeDisplay = function(select, code, caption) {
 			select.codeEle.val(code ? code : "");
 			select.captionEle.html(code ? caption : "");
+		},changeValue=function(select,code){
+			dict.apply(select.dictCode,function(dc){
+				var cap = dict.get(select.dictCode,code);
+				changeDisplay(select,cap?code:null,cap);
+			})
+			
 		};
 
 	$.extend(Jselect.prototype, {
@@ -26,31 +33,43 @@ jr.define(["jQuery", "dict"], function($, dict) {
 			this.captionEle = $("<a class='select-caption' href='javascript:void(0)'></a>");
 			this.ele.append(this.codeEle).append(this.captionEle);
 			if(this.dv) {
-				dict.apply(this.dictCode, (function(that) {
-					return function(dict) {
-						var caption = dict.get(that.dictCode, that.dv);
-						changeValue(that, caption ? that.dv : null, caption);
-					};
-				})(this));
-			} else {
-				changeValue(this);
-			}
+				changeValue(this,this.dv)
+			} 
 			if((!this.readOnly) && (!this.showOnly)) {
 				this.selectItemEle = $("<div class='select-drop'><div class='select-loading'></div></div>");
 				this.selectItemEle.appendTo(this.ele);
 				dict.apply(this.dictCode, (function(that) {
-					return function(dict) {
+					return function(dd) {
 						that.seelctItemEle.empty();
 						if(that.dropItem) {
-							that.dropItem.call(that, dict);
+							that.dropItem.call(that, dd);
 						} else {
-							dict.buildSelectDrop.call(that, dict);
+							dict.buildSelectDrop.call(that, dd);
 						}
 					}
 				})(this));
 			}
 		},
 		val: function(val) {
+			if(arguments.length){
+				changeValue(this,this.isBool?(val?"1":"0"):(val?val:""));
+			}else{
+				
+			}
+			
+			
+				
+			if(this.isBool){
+				
+				
+				
+				
+			}else{
+				
+				
+				
+			}
+			
 			if(val) {
 				if(this.showOnly) {
 					this.ele.html(val);
@@ -70,7 +89,8 @@ jr.define(["jQuery", "dict"], function($, dict) {
 					this.valEle.val("");
 				}
 				return this;
-			} else if(!this.showOnly) {
+			}
+			else if(!this.showOnly) {
 				var vtext = this.valEle.val();
 				if(this.trimed && vtext) vtext = $.trim(vtext);
 				return vtext;
