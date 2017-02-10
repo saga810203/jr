@@ -13,7 +13,7 @@ jr.define(["jQuery", "dict"], function($, dict) {
 			this.dictCode = ele.attr("dictCode");
 			this.ele = ele;
 			this.dv = ele.attr("defaultValue") || "";
-			this.isBool = ele.attr("bool");
+			this.isBool = ele.hasClass("bool");
 		},		
 		changeDisplay = function(select, code, caption) {
 			select.codeEle.val(code ? code : "");
@@ -32,9 +32,7 @@ jr.define(["jQuery", "dict"], function($, dict) {
 			this.codeEle = $("<input type='hidden'>");
 			this.captionEle = $("<a class='select-caption' href='javascript:void(0)'></a>");
 			this.ele.append(this.codeEle).append(this.captionEle);
-			if(this.dv) {
 				changeValue(this,this.dv)
-			} 
 			if((!this.readOnly) && (!this.showOnly)) {
 				this.selectItemEle = $("<div class='select-drop'><div class='select-loading'></div></div>");
 				this.selectItemEle.appendTo(this.ele);
@@ -53,59 +51,16 @@ jr.define(["jQuery", "dict"], function($, dict) {
 		val: function(val) {
 			if(arguments.length){
 				changeValue(this,this.isBool?(val?"1":"0"):(val?val:""));
-			}else{
-				
-			}
-			
-			
-				
-			if(this.isBool){
-				
-				
-				
-				
-			}else{
-				
-				
-				
-			}
-			
-			if(val) {
-				if(this.showOnly) {
-					this.ele.html(val);
-				} else {
-					dict.apply(this.dictCode, (function(that, pv) {
-						return function(dict) {
-							var caption = dict.get(that.dictCode, pv);
-							changeValue(that, caption ? pv : null, caption);
-						};
-					})(this, val));
-				}
-				return this;
-			} else if("null" == $.type(val) || "string" == $.type(val)) {
-				if(this.showOnly) {
-					this.ele.html("");
-				} else {
-					this.valEle.val("");
-				}
-				return this;
-			}
-			else if(!this.showOnly) {
-				var vtext = this.valEle.val();
-				if(this.trimed && vtext) vtext = $.trim(vtext);
-				return vtext;
+			}else if(!this.isShowOnly){
+				var v = this.codeEle.val();
+				return this.isBool?(v?true:false):(v?v:undefined);
 			}
 		},
 		reset: function() {
-			if(this.showOnly) {
-				this.ele.html(this.dv);
-			} else {
-				this.valEle.val(dv);
-			}
+			changeValue(this,this.dv);
 		},
 		validate: function() {
-			var vtext = this.valEle.val();
-			if(this.trimed && vtext) vtext = $.trim(vtext);
+			var vtext = this.codeEle.val();
 			if(this.ele.attr("required")) {
 				if(!vtext) return "required";
 			}

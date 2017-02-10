@@ -9,6 +9,12 @@
 		this.showOnly = ele.hasClass(SHOWONLY_CSS);
 		this.ele = ele;
 		this.dv = ele.attr("defaultValue")||"";
+		this.dt = 0;
+		if(ele.hasClass("int")){
+			this.dt = 1;	
+		}else ele.hasClass("float"){
+			this.dt = 2;
+		}
 	};
 
 	$.extend(Jtext.prototype, {
@@ -22,34 +28,20 @@
 				if(this.readOnly) this.valEle.prop("readonly", "readonly");
 				this.valEle.appendTo(this.ele);
 			}
+			this.val(this.dv);
 		},
 		val: function(val) {
-			if(val) {
-				if(this.showOnly) {
-					this.ele.html(val);
-				} else {
-					this.valEle.val(val);
-				}
-				return this;
-			} else if("null" == $.type(val) || "string" == $.type(val)) {
-				if(this.showOnly) {
-					this.ele.html("");
-				} else {
-					this.valEle.val("");
-				}
-				return this;
-			}else if(!this.showOnly) {
-				var vtext = this.valEle.val();
-				if(this.trimed && vtext) vtext = $.trim(vtext);
-				return vtext;
+			if(arguments.length){
+				var ct = (val===null?"":(""+val));
+				this.showOnly?this.ele.html(ct)?this.valEle.html(ct);
+			}else if(!this.isShowOnly){
+				var v = this.codeEle.val();
+				v = this.trimed?$.trim(v):v;
+				return this.dt==0?v:(v?(this.dt==1?parseInt(v):parseFloat(v)):0);
 			}
 		},
 		reset: function() {
-			if(this.showOnly) {
-				this.ele.html(this.dv);
-			} else {
-				this.valEle.val(dv);
-			}
+			this.val(this.dv);
 		},
 		validate: function() {
 			var vtext = this.valEle.val();

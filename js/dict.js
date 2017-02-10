@@ -4,7 +4,7 @@ jr.define(["jQuery", "util"], function($, util) {
 			var _dictGuid = 1;
 			var handerArray = "handlers";
 			return {
-				baseUri: "",
+				baseUri: "/js/ddict/",
 				apply: function(dictCode, handler, dynamic) {
 					if(dynamic) {
 						var pt = Math.random().replace(/\D/g, "") + (++_dictGuid);
@@ -56,13 +56,15 @@ jr.define(["jQuery", "util"], function($, util) {
 					}
 				},
 				get: function(dict, code) {
-					for(var i = 0; i < dict.length; ++i) {
-						var item = dict[i];
-						if(code === item.code) {
-							return item.caption;
-						} else if(item.children && item.children.length) {
-							var ret = Dict.get(item.children, code);
-							if(ret) return ret;
+					if(code) {
+						for(var i = 0; i < dict.length; ++i) {
+							var item = dict[i];
+							if(code === item.code) {
+								return item.caption;
+							} else if(item.children && item.children.length) {
+								var ret = Dict.get(item.children, code);
+								if(ret) return ret;
+							}
 						}
 					}
 					return false;
@@ -94,4 +96,5 @@ jr.define(["jQuery", "util"], function($, util) {
 					this.selectItemEle.append($ul);
 				}
 
-			})
+			});
+			

@@ -37,17 +37,30 @@ jr.define(["jQuery", "jhidden", "jtext"], function($, hidden, text) {
 
 		Jform = function(ele) {
 			this.items = {};
+			var that = this;
 			ele.find(".form_item").each(function() {
 				var $this = $(this);
 				for(var i = 0; i < FORM_ITEM_CREATER.length; ++i) {
 					var item = FORM_ITEM_CREATER[i].build($this);
 					if(item) {
 						this.items[item.name] = item;
+						
 						return false;
 					}
 				}
 			});
-		};
+		},
+		FormPlugin=function(cfg){
+			if(this.length){
+				var form = $(this[0]);
+				var ret = form.data();
+			}
+		}
+		
+		
+		;
+		
+		
 	$.extend(Jform.prototype, {
 		item: function(name) {
 			return this.items[name];

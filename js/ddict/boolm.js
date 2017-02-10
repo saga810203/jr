@@ -1,0 +1,43 @@
+(function($) {
+	$.dictDefine("boolm", [{
+		code: "0",
+		caption: "00dddddddddddddddd",
+		shortCode: "N",
+		enabled: true,
+	}, {
+		code: "1",
+		caption: "11ddddddddddddd",
+		shortCode: "Y",
+		enabled: true
+	}, {
+		code: "2",
+		caption: "22",
+		shortCode: "Y",
+		enabled: true
+	}, {
+		code: "3",
+		caption: "33dddddddddddddddd",
+		shortCode: "Y",
+		enabled: true
+	}, {
+		code: "4",
+		caption: "44",
+		shortCode: "Y",
+		enabled: true
+	}, {
+		code: "5",
+		caption: "55",
+		shortCode: "Y",
+		enabled: true
+	}, {
+		code: "6",
+		caption: "66",
+		shortCode: "Y",
+		enabled: true
+	}, {
+		code: "7",
+		caption: "77",
+		shortCode: "Y",
+		enabled: true
+	}]);
+})(jQuery);

@@ -1,20 +1,39 @@
 <!DOCTYPE html>
 <html>
+
 	<head>
 		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<title></title>
+		<link href="css/jui.css" rel="stylesheet" type="text/css" />
+		<style>
+
+		</style>
 	</head>
+
 	<body>
-		<input type="text" placeholder="" />
-		<div required dataType=1></div>
+		<div id="ff" class="container">
+			<div class="row">
+				<div class="col-4"><div class="form-item text" name="aa"></div></div>
+				
+				<div class="col-8"><div class="form-item select tree" dictCode="bool" name="bb" defVal="0"></div></div>
+			
+			</div>
+			<div class="row">
+				<div class="col-6"><div class="form-item mselect" dictCode="boolm" name="cc" defVal="4"></div></div>
+					
+			</div>
+
+		</div>
+		<i class="icon-resize"></i>
 	</body>
 	<script type="text/javascript" src="js/jquery-1.12.4.js"></script>
+	<script type="text/javascript" src="js/base1.js"></script>
 	<script>
-		$(function(){
-			console.log("r==="+$("div").attr("required"));
-			console.log("r+++"+$("div").prop("required"));
-		    console.log("d==="+$("div").attr("dataType"));
-			console.log("d+++"+$("div").prop("dataType"));
+		$(function() {
+			$("#ff").form();
+
 		});
 	</script>
+
 </html>

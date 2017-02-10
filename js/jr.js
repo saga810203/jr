@@ -362,5 +362,19 @@
 		}
 
 	})();
+	
+	(function(){
+		if(global.jQuery){
+			var script = getCurrentScript();
+			var jqUri = resolve("jQuery",realpath(script.src).match(URI_RE)[0]);
+			var mod = getModule(jqUri);
+			try {
+			mod.eObj = global.jQuery;
+			mod.statu = JM_ST.EXECUTED;
+			delete mod.refs;
+			delete mod.deps;
+		}
+	})();
+	
 	return jr;
 })(this);

@@ -1,5 +1,8 @@
-jr.define(["jQuery","base"], function($,base) {
-	var Util = {};
+jr.define(["jQuery", "base"], function($, base) {
+	var doc = document,
+		head = doc.head || doc.getElementsByTagName("head")[0] || doc.documentElement,
+		baseElement = head.getElementsByTagName("base")[0],
+		Util = {};
 
 	/*
 	 * parent is body z-index = 9999999
@@ -38,9 +41,28 @@ jr.define(["jQuery","base"], function($,base) {
 	 */
 	Util.confirmMsg = function(cnt, yesHandler, noHandler) {};
 
-	Util.loadScript = function(url) {};
-	
+	Util.loadScript = function(url) {
+		var node = doc.createElement("script");
+		node.async = true;
+		node.src = url;
+		node.charset = "UTF-8";
+		var supportOnload = "onload" in node;
+		if(supportOnload) {
+			node.onload = onload;
+			node.onerror = onerror;
+		} else {
+			node.onreadystatechange = onreadystatechange;
+		}
+		// For some cache cases in IE 6-8, the script executes IMMEDIATELY after
+		// the end of the insert execution, so use `currentlyAddingScript` to
+		// hold current node, for deriving url in `define` call
+		currentlyAddingScript = node;
+		baseElement ?
+			head.insertBefore(node, baseElement) :
+			head.appendChild(node);
+		currentlyAddingScript = null;
 
-	
+	};
+
 	return Util;
 });
