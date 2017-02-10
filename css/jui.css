@@ -1778,7 +1778,7 @@ a cite {
     position: relative;
     display: block;
     width: 100%;
-    padding: 6px 12px;
+    padding: 6px 6px;
     overflow: hidden;
     /*line-height: 1.53846154;*/
     line-height: 1.42846154;
@@ -1804,18 +1804,23 @@ a cite {
     height: 34px;
     white-space: nowrap;
 }
-
-.form-item > .dd-hand > i:before {
+.form-item > a.dd-hand > i {
+    display:block;
+    position: absolute;
+	top:8px;
+	right: 10px;
+}
+.form-item > a.dd-hand > i:before {
     content: '\e671';
 }
 
-.form-item.open > .dd-hand > i {
-    content: '\e671';
+.form-item.open > a.dd-hand > i:before {
+    content: '\e670';
 }
 
 .form-item.mselect {}
 
-.form-item.mselect > a:before {
+.form-item.mselect > a.dd-hand:before {
     display: inline-block;
     content: "";
 }
@@ -1849,10 +1854,25 @@ a cite {
 .form-item .dd-drop .branch-item > ul {
     display: none;
 }
-
+.form-item .dd-drop .branch-item > a {
+font-weight:bold ;
+position: relative;
+padding-right: 20px;
+}
+.form-item .dd-drop .branch-item > a >i{
+position: absolute;
+top:8px;
+right: 10px;
+}
+.form-item .dd-drop .branch-item > a >i:before {
+content: '\e64f';
+}
 .form-item .dd-drop .branch-item > a.open + ul {
     display: block;
     padding: 0 0 0 10px;
+}
+.form-item .dd-drop .branch-item > a.open >i:before {
+content: '\e64e';
 }
 
 .form-item .dd-drop .select-item {
@@ -1877,9 +1897,11 @@ a cite {
     position: relative;
     padding-right: 18px;
     float: left;
-    padding: 0 12px 0 5px;
+    padding: 2px 12px 2px 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    margin-right: 5px;
+    line-height: 1;
 }
 
 .form-item .select-caption div {

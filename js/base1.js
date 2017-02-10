@@ -36,6 +36,10 @@ function($) {
 		QF_DROP_DOWN_BACKGROUP = ".dd-bg",
 		CC_DROP_DOWN_HAND = "dd-hand",
 		QF_DROP_DOWN_HAND = ".dd-hand",
+		CC_DROP_DOWN_PANEL = "dd-drop",
+		QF_DROP_DOWN_PANEL = ".dd-drop",
+		CC_DROP_CLEAN = "dd-clean",
+		QF_DROP_CLEAN = ".dd-clean",
 		QF_OPEN = ".open",
 		CC_OPEN = "open",
 		CC_DISABLED = "disabled",
@@ -73,6 +77,10 @@ function($) {
 		CK_TRUE = true,
 		CK_FALSE = false,
 		CK_UNDEF = undefined,
+		CK_YYYYMMDD = "YYYYMMDD",
+		CK_YYYY = "YYYY",
+		CK_MM = "MM",
+		CK_YYYYMM = "YYYYMM",
 
 		DK_FORM_VALUE = "form_value";
 
@@ -80,6 +88,12 @@ function($) {
 	 * TK = template key
 	 */
 	var TK_TEXT_INPUT = "<input type='text' />",
+		TK_SPAN = "<span></span>",
+		TK_UL = "<ul></ul>",
+		TK_LI = "<li></li>",
+		TK_ICON = "<i class='icon'></i>",
+		TK_DD_DROP = "<div class='dd-drop'></div>",
+		TK_DD_HAND = "<a class='dd-hand' href='javascript:void(0)'><span></span><i class='icon'></i></a>",
 		TK_HIDDEN_INPUT = "<input type='hidden' />";
 
 	var doc = document,
@@ -163,6 +177,8 @@ function($) {
 				$this.trigger(evt = $.Event('hide.jr.dropdown', relatedTarget))
 				if(evt.isDefaultPrevented()) return
 				$this.removeClass(CC_OPEN).trigger('hidden.jr.dropdown', relatedTarget)
+				if(!$this.hasClass(CC_DROP_CLEAN)) return
+				$this.find(QF_DROP_DOWN_PANEL).remove();
 			});
 		},
 		dd_toggle = function(e) {
@@ -170,6 +186,7 @@ function($) {
 			var $ddc = $this.parents(QF_DROP_DOWN_CONTAINER);
 			if(!$ddc.length) return;
 			if($ddc.is(QF_DISABLED)) return;
+			if($ddc.hasClass(CC_FORM_ITEM) && ($ddc.hasClass(CC_READONLY) || $ddc.hasClass(CC_SHOWONLY))) return;
 			var isActive = $ddc.hasClass(CC_OPEN);
 			dd_clearMenus();
 			if(!isActive) {
@@ -304,7 +321,7 @@ function($) {
 		},
 		select_display = function(select, code, caption) {
 			select.codeEle.val(code ? code : "");
-			select.captionEle.html(code ? caption : "");
+			select.captionEle.text(code ? caption : "");
 		},
 		select_change = function(select, code) {
 			if(select.codeEle.val() !== code) {
@@ -351,9 +368,9 @@ function($) {
 				dict_apply(mselect.dictCode, function(dict) {
 					var cp = dict_get(dict, code);
 					if(cp) {
-						$li.append($("<span></span>").html(cp));
+						$li.append($(TK_SPAN).html(cp));
 					} else {
-						$li.addClass("error-dict");
+						$li.append($("<span style='color:red;'></span>").html("error"));
 					}
 				});
 				return true;
@@ -371,30 +388,30 @@ function($) {
 			}
 		},
 		select_buildListDrop = function(dict) {
-			var $ul = $("<ul></ul>");
+			var $ul = $(TK_UL);
 			for(var i = 0; i < dict.length; ++i) {
 				var item = dict[i];
 				if(item.enabled) {
 					var $li = $("<li class='select-item'></li>");
 					$li.attr(AK_CODE, item.code);
-					$li.html(item.caption);
+					$li.text(item.caption);
 					$li.appendTo($ul);
 				}
 			}
 			return $ul;
 		},
 		select_buildTreeDrop = function(dict) {
-			var $ul = $("<ul></ul>");
+			var $ul = $(TK_UL);
 			for(var i = 0; i < dict.length; ++i) {
 				var item = dict[i];
 				if(item.enabled) {
-					var $li = $("<li></li>");
+					var $li = $(TK_LI);
 					if(item.children && item.children.length) {
-						var $ti = $("<a href='javascript:void(0)'></a>");
-						$ti.attr(AK_CODE, item.code).html(item.caption);
+						var $ti = $("<a href='javascript:void(0)'><i class='icon'></a>");
+						$ti.attr(AK_CODE, item.code).append($(TK_SPAN).text(item.caption));
 						$li.addClass(CC_BRANCH_ITEM).append($ti).append(select_buildTreeDrop.call(this, item.children));
 					} else {
-						$li.addClass(CC_SELECT_ITEM).attr(AK_CODE, item.code).html(item.caption);
+						$li.addClass(CC_SELECT_ITEM).attr(AK_CODE, item.code).text(item.caption);
 					}
 					$li.appendTo($ul);
 				}
@@ -415,7 +432,48 @@ function($) {
 			$(this).toggleClass(CC_OPEN);
 			evt.stopPropagation();
 		},
-		FORM_ITEM_CREATER = [Jhidden, Jtext, Jselect, Jmselect],
+
+		Jdate = function(ele) {
+			this.name = ele.attr(AK_NAME) || ele.attr(AK_ID);
+			if(!this.name) {
+				throw "Attribute[name] is invalid";
+			}
+			this.readOnly = ele.hasClass(CC_READONLY);
+			this.showOnly = ele.hasClass(CC_SHOWONLY);
+			this.ele = ele;
+			this.dv = ele.attr(AK_DEF_VAL);
+			this.dataType = 0; // YYYYMMDD
+			var tmp = ele.attr("format")||"YYYYMMDD";
+			this.year = tmp.indexOf("YYYY")>=0;
+			this.month = tmp.indexOf("MM")>=0;
+			this.day = tmp.indexOf("DD")>=0;
+			this.hour = tmp.indexOf("HH")>=0;
+			this.minute = tmp.indexOf("MI")>=0;
+			this.second = tmp.indexof("SS")>=0;
+			this.nullVal = ele.attr("nullVal");
+			ele.data(DK_FORM_VALUE, this);
+		},
+		date_change = function(date, val) {
+			if(val) {
+				if(val == "current") {
+					val = date.getNow();
+				}
+				var dt = "";
+				if(date.year) {
+					dt = val.sustring(0, 4) + "-" + val.substring(4, 6) + "-" + val.substring(6, 8);
+				} else if(dt == 1) {
+					dt = val.sustring(0, 4) + "-" + val.substring(4, 6);
+				} else if(dt == 2 || dt == 3) {
+					dt = val;
+				}
+				date.captionEle.text(dt);
+				date.valEle.val(val);
+			} else {
+				date.valEle.val("");
+				date.captionEle.text(date.nullVal ? date.nullVal : "");
+			}
+		},
+		FORM_ITEM_CREATER = [Jhidden, Jtext, Jselect, Jmselect, Jdate],
 
 		serialize = function(obj, name, val, r) {
 			var ret = r || "";
@@ -484,6 +542,9 @@ function($) {
 	Jmselect.build = function(ele) {
 		return ele.hasClass("mselect") ? new Jmselect(ele) : CK_FALSE;
 	};
+	Jdate.build = function(ele) {
+		return ele.hasClass("date") ? new Jdate(ele) : CK_FALSE;
+	};
 	$.extend(Jhidden.prototype, {
 		val: function(val) {
 			if(val) {
@@ -505,6 +566,7 @@ function($) {
 	});
 	$.extend(Jtext.prototype, {
 		render: function() {
+			this.ele.empty();
 			if(this.showOnly) {
 				this.ele.html("");
 			} else {
@@ -539,13 +601,14 @@ function($) {
 	});
 	$.extend(Jselect.prototype, {
 		render: function() {
+			this.ele.empty();
 			if(!this.ele.hasClass(CC_DROP_DOWN_CONTAINER)) this.ele.addClass(CC_DROP_DOWN_CONTAINER);
 			this.codeEle = $(TK_HIDDEN_INPUT).appendTo(this.ele);
-			this.captionEle = $("<a class='dd-hand' href='javascript:void(0)'><span></span><i class='icon'></i></a>").appendTo(this.ele).find("span");
+			this.captionEle = $(TK_SPAN).appendTo($(TK_DD_HAND).appendTo(this.ele));
 			//this.ele.append(this.codeEle).append(this.captionEle);
-			select_change(this, this.dv)
+			select_change(this, this.dv);
 			if((!this.readOnly) && (!this.showOnly)) {
-				this.selectItemEle = $("<div class='dd-drop'><div class='select-loading'></div></div>");
+				this.selectItemEle = $(TK_DD_DROP).append($("<div class='select-loading'></div>"));
 				this.selectItemEle.appendTo(this.ele);
 				dict_apply(this.dictCode, (function(that) {
 					return function(dd) {
@@ -584,12 +647,13 @@ function($) {
 	});
 	$.extend(Jmselect.prototype, {
 		render: function() {
+			this.ele.empty();
 			if(!this.ele.hasClass(CC_DROP_DOWN_CONTAINER)) this.ele.addClass(CC_DROP_DOWN_CONTAINER);
-			this.captionEle = $("<ul></ul>").appendTo($("<a class='dd-hand' href='javascript:void(0)'><i></i></a>").appendTo(this.ele));
+			this.captionEle = $(TK_UL).appendTo($(TK_DD_HAND).appendTo(this.ele));
 			mselect_change(this, this.dv);
 
 			if((!this.readOnly) && (!this.showOnly)) {
-				this.selectItemEle = $("<div class='dd-drop'><div class='select-loading'></div></div>");
+				this.selectItemEle = $(TK_DD_DROP).append($("<div class='select-loading'></div>"));
 				this.selectItemEle.appendTo(this.ele);
 				dict_apply(this.dictCode, (function(that) {
 					return function(dd) {
@@ -623,6 +687,29 @@ function($) {
 			if(!mselect_add(this, $item.attr(AK_CODE)))
 				evt.stopPropagation();
 		}
+	});
+	$.extend(Jdate.prototype, {
+		render: function() {
+			this.ele.empty();
+			if(!this.ele.hasClass(CC_DROP_DOWN_CONTAINER)) this.ele.addClass(CC_DROP_DOWN_CONTAINER);
+			if(!this.ele.hasClass(CC_DROP_CLEAN)) this.ele.addClass(CC_DROP_CLEAN);
+			this.valEle = $(TK_HIDDEN_INPUT);
+			this.captionEle = $(TK_SPAN).appendTo($(TK_DD_HAND).append(this.valEle).appendTo(this.ele));
+			date_change(this, this.dv);
+		},
+		val: function(val) {
+			if(arguments.length) {
+				date_change(this, val);
+				return this;
+			} else if(!this.isShowOnly) {
+				var ret = this.valEle.val();
+				return ret ? ret : CK_UNDEF;
+			}
+		},
+		reset: function() {
+			date_change(this, this.dv);
+		},
+		validate: returnTrue,
 	});
 	$.extend(Jform.prototype, {
 		init: function(options) {
@@ -693,9 +780,21 @@ function($) {
 	$(doc).on("click.jr_dropdown_api", QF_DROP_DOWN_HAND, dd_toggle);
 	$(doc).on("click.jr_select_api", QF_BRANCH_ITEM, select_branceItem);
 	$(doc).on("click.jr_select_api", QF_SELECT_ITEM, select_selectItem);
-	$(doc).on("click.jr_mselect_remove_api",".form-item.mselect .select-caption div",function(e){
+	$(doc).on("click.jr_mselect_remove_api", ".form-item.mselect .select-caption div", function(e) {
 		$(this).parents(QF_SELECT_CAPTION).remove();
 		e.stopPropagation();
 	});
+
+	var dateTemplate = ["<div class='dd-drop date'><input class='YYYY' type='hidden'/><input class='MM' type='hidden'/>",
+		"<input class='DD' type='hidden'/><input class='HH' type='hidden'/><input class='MI' type='hidden'/>",
+		"<input class='SS' type='hidden'/><table><thead></thead><tbody></tbody><tfoot></tfoot></table>"].join("");
+$(doc).on("show", ".dd-ctn.date", function() {
+	var $dateCtn = $(this);
+	var date = $dateCtn.data(DK_FORM_VALUE);
+	if(date) {
+		$(dateTemplate).appendTo($dateCtn);
+		
+	}
+});
 
 }(jQuery);

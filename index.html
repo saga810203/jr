@@ -12,15 +12,15 @@
 	</head>
 
 	<body>
-		<div id="ff" class="container">
+		<div id="ff" dd class="container" readonly>
 			<div class="row">
 				<div class="col-4"><div class="form-item text" name="aa"></div></div>
 				
-				<div class="col-8"><div class="form-item select tree" dictCode="bool" name="bb" defVal="0"></div></div>
+				<div class="col-8"><div class="form-item select tree" dictCode="bool" name="bb" ></div></div>
 			
 			</div>
 			<div class="row">
-				<div class="col-6"><div class="form-item mselect" dictCode="boolm" name="cc" defVal="4"></div></div>
+				<div class="col-6"><div class="form-item tree mselect" dictCode="bool" name="cc" defVal="4"></div></div>
 					
 			</div>
 
@@ -32,6 +32,10 @@
 	<script>
 		$(function() {
 			$("#ff").form();
+//			console.log($("#ff").attr("id"));
+//			console.log($("#ff").prop("id"));
+			console.log($("#ff").attr("readonly")?"1":"0");
+			console.log($("#ff").prop("readonly")?"1":"0");
 
 		});
 	</script>
