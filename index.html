@@ -7,35 +7,70 @@
 		<title></title>
 		<link href="css/jui.css" rel="stylesheet" type="text/css" />
 		<style>
-
+			#ff {
+				max-width: 800px;
+			}
 		</style>
 	</head>
 
 	<body>
-		<div id="ff" dd class="container" readonly>
+		<div id="ff" dd class="container" yyyy>
 			<div class="row">
-				<div class="col-4"><div class="form-item text" name="aa"></div></div>
-				
-				<div class="col-8"><div class="form-item select tree" dictCode="bool" name="bb" ></div></div>
-			
+				<div class="col-4">
+					<div class="form-item text " defVal="中华人民共和国" name="aa1"></div>
+				</div>
+
+				<div class="col-8">
+					<div class="form-item select tree " dictCode="bool" name="bb1" defVal="1"></div>
+				</div>
+
 			</div>
 			<div class="row">
-				<div class="col-6"><div class="form-item tree mselect" dictCode="bool" name="cc" defVal="4"></div></div>
-					
+				<div class="col-4">
+					<div class="form-item text readOnly" defVal="中华人民共和国" name="aa"></div>
+				</div>
+
+				<div class="col-8">
+					<div class="form-item select tree " dictCode="bool" name="bb" defVal="1"></div>
+				</div>
+
+			</div>
+			<div class="row">
+				<div class="col-2 item-caption required"> 中国</div>
+				<div class="col-4">
+					<div class="form-item tree mselect " dictCode="booldd" name="cc" defVal="4"></div>
+				</div>
+				<div class="col-6">
+					<div class="form-item date  " name="dd" defVal="current"></div>
+				</div>
 			</div>
 
 		</div>
 		<i class="icon-resize"></i>
+
+		<div id='g_info'>
+			<div id='g_err'>
+				
+			</div>
+			<div id='g_warn'>
+				
+			</div>
+			<div id='g_msg'>
+				
+
+			</div>
+		</div>
+		<div id='g_loading' style="display: none;"><i class='icon icon-spin icon-spinner-snake'><div>
 	</body>
 	<script type="text/javascript" src="js/jquery-1.12.4.js"></script>
 	<script type="text/javascript" src="js/base1.js"></script>
 	<script>
 		$(function() {
 			$("#ff").form();
-//			console.log($("#ff").attr("id"));
-//			console.log($("#ff").prop("id"));
-			console.log($("#ff").attr("readonly")?"1":"0");
-			console.log($("#ff").prop("readonly")?"1":"0");
+			//			console.log($("#ff").attr("id"));
+			//			console.log($("#ff").prop("id"));
+	//		console.log($("#ff").attr("yyyy") ? "1" : "0");
+	//		console.log($("#ff").prop("yyyy") ? "1" : "0");
 
 		});
 	</script>

@@ -106,23 +106,60 @@ function($) {
 		returnTrue = function() {
 			return CK_TRUE
 		},
-		util = {
+		_infoDiv = $("#g_info"),
+		_errDiv = $("#g_err"),
+		_warnDiv = $("#g_warn"),
+		_msgDiv = $("#g_msg"),
+		_loadingDiv = $("#g_loading"),
+		_g_css_ref = 1;
+	_g_loadRef = 0;
+
+	util = {
 
 			// parent is body z-index = 9999999
 			// *弹出错误信息，会自动消失
 			//cnt String or jquery obj
 			//msg container is div
 			//$(msg container).text(String)  or $(msg container).append(jquery obj); 
-			error: function(cnt) {},
+			error: function(cnt, timeInternal) {
+				var $errCtn = $("<div class='err-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_errDiv);
+				$(TK_SPAN).appendTo($errCtn).html(cnt);
+				setTimeout(function() {
+					$errCtn.remove()
+				}, timeInternal ? timeInternal : 5000);
+			},
 			//弹出警告信息，会自动消失  ref  Util.error
-			warn: function(cnt) {},
+			warn: function(cnt, timeInternal) {
+				var $warnCtn = $("<div class='warn-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_warnDiv);
+				$(TK_SPAN).appendTo($warnCtn).html(cnt);
+				setTimeout(function() {
+					$warnCtn.remove()
+				}, timeInternal ? timeInternal : 3000);
+			},
 			//弹出提示信息，会自动消失 ref  Util.error
-			msg: function(cnt) {},
+			msg: function(cnt, timeInternal) {
+				var $msgCtn = $("<div class='msg-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_msgDiv);
+				$(TK_SPAN).appendTo($msgCtn).html(cnt);
+				setTimeout(function() {
+					$msgCtn.remove()
+				}, timeInternal ? timeInternal : 2000);
+			},
 
 			//弹出加载信息遮罩    parent  is  body     z-index =  9999998; 
-			showLoading: function() {},
+			showLoading: function() {
+				++_g_loadRef;
+				if(_g_loadRef === 1) {
+					_loadingDiv.show()
+				}
+
+			},
 			//隐藏加载信息遮罩    parent  is  body     z-index =  9999998; 
-			hideLoading: function() {},
+			hideLoading: function() {
+				--_g_loadRef;
+				if(_g_loadRef === 0) {
+					_loadingDiv.hide()
+				}
+			},
 			/*
 			 * 弹出提示信息，不会自动消失    parent is body z - index 5000000 - 9999997
 			 */
@@ -146,19 +183,106 @@ function($) {
 				node.src = url;
 				node.charset = "UTF-8";
 				var supportOnload = "onload" in node;
+				util.msg("begin load script " + url);
+				util.showLoading();
 				if(supportOnload) {
 					//todo:dddd
-					node.onload = noop;
+					node.onload = function() {
+						util.msg("load script success:" + url);
+						node.onerror = null;
+						node.onload = null;
+						util.hideLoading();
+					};
 					//todo:dddd
-					node.onerror = noop;
+					node.onerror = function() {
+						util.error("load script error:" + url);
+						node.onload = null;
+						node.onerror = null;
+						util.hideLoading();
+					};
 				} else {
 					//todo:dddd
-					node.onreadystatechange = noop;
+					node.onreadystatechange = function() {
+						if(/loaded|complete/.test(node.readyState)) {
+							node.onreadystatechange = null;
+							util.msg("load script over:" + url);
+							util.hideLoading();
+						}
+					};
 				}
 				baseElement ?
 					head.insertBefore(node, baseElement) :
 					head.appendChild(node);
-			}
+			},
+
+			loadCSS: function(href) {
+				var link = doc.createElement('link');
+
+				link.rel = 'stylesheet';
+				link.href = href;
+				link.media = 'all';
+				var id = "g_css_" + _g_css_ref;
+				++_g_css_ref;
+				link.id = id;
+				head.appendChild(link);
+				return id;
+			},
+			removeCSS:function(id){
+				var node = doc.getElementById(id);
+				if(node){
+					head.removeChild(node);
+				}
+			},
+
+			ajax: function(method, pUrl, pData, sh, eh) {
+				util.showLoading();
+				$.ajax({
+					type: method,
+					url: pUrl,
+					data: pData,
+					contentType: method == "put" ? "application/json" : "application/x-www-form-urlencoded",
+				}).done(function(rd) {
+					if(rd.success) {
+						sh(rd.data);
+					} else {
+						if(eh) {
+							var eht = $.type(eht);
+							if(eht == TN_FNC) {
+								eh(rd.code, rd.msg, rd.detailMsg);
+							} else if(eht == TN_BOOL) {
+								if(eht) {
+									util.error("load resource error:" + pUrl + "\n" + (rd.detailMsg ? rd.detailMsg : ""));
+								}
+							} else {
+								var msg = eh[rd.code];
+								if(msg) {
+									if($.type(msg) == TN_FNC) {
+										msg();
+									} else {
+										util.error(msg ? msg : "未定义的错误");
+									}
+								}
+							}
+
+						}
+					}
+				}).fail(function(jqXHR, textStatus, errorThrown) {
+					util.msg("load resouce[" + pUrl + "] error:" + textStatus);
+				}).always(util.hideLoading);
+			},
+			get: function(url, data, sh, eh) {
+				util.ajax("get", url, data, sh, eh);
+			},
+			post: function(url, data, sh, eh) {
+				util.ajax("post", url, data, sh, eh);
+			},
+			put: function(url, data, sh, eh) {
+				util.ajax("put", url, data, sh, eh);
+			},
+			delete: function(url, sh, eh) {
+				util.ajax("post", url, null, sh, eh);
+			},
+
 		},
 
 		//begin dropdown
@@ -432,7 +556,54 @@ function($) {
 			$(this).toggleClass(CC_OPEN);
 			evt.stopPropagation();
 		},
-
+		date_year = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+		date_leapYear = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+		date_isleap = function(y) {
+			return(y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+		},
+		date_validDate = function(v) {
+			if(v.length != 8) return false;
+			for(var i = 0; i < 8; ++i) {
+				var c = v.charAt(i);
+				if(c > '9' || c < '0') return false;
+			}
+			var m = parseInt(v.substring(4, 6)) - 1;
+			if(m < 0 || m > 11) return false;
+			var d = parseInt(v.substring(6, 8));
+			var ym = date_isleap(parseInt(v.substring(0, 4))) ? date_leapYear : date_year;
+			if(d < 1 || d > ym[m]) return false;
+			return true;
+		},
+		date_fmt = function(v) {
+			return(v > 9 ? "" : "0") + v;
+		},
+		date_MS_IN_DAY = 24 * 60 * 60 * 1000,
+		date_incDay = function(d) {
+			return new Date(d.getTime() + date_MS_IN_DAY);
+		},
+		date_decDay = function(d) {
+			return new Date(d.getTime() - date_MS_IN_DAY);
+		},
+		date_dayFmt = function(d) {
+			return "" + d.getFullYear() + date_fmt(d.getMonth() + 1) + date_fmt(d.getDate());
+		},
+		date_now = function() {
+			var d = new Date();
+			return "" + d.getFullYear() + date_fmt(d.getMonth() + 1) + date_fmt(d.getDate()) + date_fmt(d.getHours()) + date_fmt(d.getMinutes()) + date_fmt(d.getSeconds());
+		},
+		date_change = function(date, val) {
+			if(val) {
+				if(val == "current") {
+					val = date_now().substr(0, 8);
+				}
+				var dt = val.substring(0, 4) + "-" + val.substring(4, 6) + "-" + val.substring(6, 8);
+				date.captionEle.text(dt);
+				date.valEle.val(val);
+			} else {
+				date.valEle.val("");
+				date.captionEle.text(date.nullVal ? date.nullVal : "");
+			}
+		},
 		Jdate = function(ele) {
 			this.name = ele.attr(AK_NAME) || ele.attr(AK_ID);
 			if(!this.name) {
@@ -442,30 +613,15 @@ function($) {
 			this.showOnly = ele.hasClass(CC_SHOWONLY);
 			this.ele = ele;
 			this.dv = ele.attr(AK_DEF_VAL);
-			this.dataType = 0; // YYYYMMDD
-			var tmp = ele.attr("format")||"YYYYMMDD";
-			this.year = tmp.indexOf("YYYY")>=0;
-			this.month = tmp.indexOf("MM")>=0;
-			this.day = tmp.indexOf("DD")>=0;
-			this.hour = tmp.indexOf("HH")>=0;
-			this.minute = tmp.indexOf("MI")>=0;
-			this.second = tmp.indexof("SS")>=0;
 			this.nullVal = ele.attr("nullVal");
 			ele.data(DK_FORM_VALUE, this);
 		},
-		date_change = function(date, val) {
+		datetime_change = function(date, val) {
 			if(val) {
 				if(val == "current") {
-					val = date.getNow();
+					val = date_now();
 				}
-				var dt = "";
-				if(date.year) {
-					dt = val.sustring(0, 4) + "-" + val.substring(4, 6) + "-" + val.substring(6, 8);
-				} else if(dt == 1) {
-					dt = val.sustring(0, 4) + "-" + val.substring(4, 6);
-				} else if(dt == 2 || dt == 3) {
-					dt = val;
-				}
+				var dt = val.sustring(0, 4) + "-" + val.substring(4, 6) + "-" + val.substring(6, 8) + " " + val.substring(8, 10) + ":" + val.substring(10, 12) + ":" + val.substring(12);
 				date.captionEle.text(dt);
 				date.valEle.val(val);
 			} else {
@@ -473,7 +629,19 @@ function($) {
 				date.captionEle.text(date.nullVal ? date.nullVal : "");
 			}
 		},
-		FORM_ITEM_CREATER = [Jhidden, Jtext, Jselect, Jmselect, Jdate],
+		Jdatetime = function(ele) {
+			this.name = ele.attr(AK_NAME) || ele.attr(AK_ID);
+			if(!this.name) {
+				throw "Attribute[name] is invalid";
+			}
+			this.readOnly = ele.hasClass(CC_READONLY);
+			this.showOnly = ele.hasClass(CC_SHOWONLY);
+			this.ele = ele;
+			this.dv = ele.attr(AK_DEF_VAL);
+			this.nullVal = ele.attr("nullVal");
+			ele.data(DK_FORM_VALUE, this);
+		},
+		FORM_ITEM_CREATER = [Jhidden, Jtext, Jselect, Jmselect, Jdate, Jdatetime],
 
 		serialize = function(obj, name, val, r) {
 			var ret = r || "";
@@ -545,6 +713,9 @@ function($) {
 	Jdate.build = function(ele) {
 		return ele.hasClass("date") ? new Jdate(ele) : CK_FALSE;
 	};
+	Jdatetime.build = function(ele) {
+		return ele.hasClass("datetime") ? new Jdatetime(ele) : CK_FALSE;
+	};
 	$.extend(Jhidden.prototype, {
 		val: function(val) {
 			if(val) {
@@ -581,7 +752,7 @@ function($) {
 		val: function(val) {
 			if(arguments.length) {
 				var ct = (val === null ? "" : ("" + val));
-				this.showOnly ? this.ele.html(ct) : this.valEle.html(ct);
+				this.showOnly ? this.ele.text(ct) : this.valEle.val(ct);
 			} else if(!this.isShowOnly) {
 				var v = this.codeEle.val();
 				v = this.trimed ? $.trim(v) : v;
@@ -710,6 +881,54 @@ function($) {
 			date_change(this, this.dv);
 		},
 		validate: returnTrue,
+		show: function($ctn) {
+			if(this.readOnly || this.showOnly) return;
+			var val = this.valEle.val();
+			var n = date_now();
+			val = val ? (date_validDate(val) ? val : n) : n;
+			var $div = $("<div class='dd-drop date'></div>").appendTo(this.ele);
+			this.showDay($div, parseInt(val.substring(0, 4)), parseInt(val.substring(4, 6)) - 1);
+		},
+		showDay: function(div, y, m) {
+			div.empty();
+			var table = $("<table></table>").appendTo(div).addClass("day");
+			table.attr("year", "" + y);
+			table.attr("month", "" + (m + 1));
+			var head = $("<thead></thead>").appendTo(table);
+			var body = $("<tbody></tbody>").appendTo(table);
+			var foot = $("<tfoot></tfoot>").appendTo(table);
+			var caption = $("<tr><th class='prev-year'><i class='icon-arrow-left'></i></th><th class='prev-month'><i class='icon-chevron-left'></i></th><th colspan='3' class='switch'></th><th class='next-month'><i class='icon-chevron-right'></i></th><th class='next-year'><i class='icon-arrow-right'></i></th></tr><tr><th class='dow'>日</th><th class='dow'>一</th><th class='dow'>二</th><th class='dow'>三</th><th class='dow'>四</th><th class='dow'>五</th><th class='dow'>六</th></tr>").appendTo(head).find(".switch");
+			caption.html(date_fmt(m + 1) + "月 " + y + "年");
+			var dd = new Date();
+			dd.setFullYear(y);
+			dd.setMonth(m);
+			dd.setDate(1);
+			var dayInWeek = dd.getDay();
+			var days = ["<tr>"];
+			for(var i = 0; i < dayInWeek; ++i) {
+				var cd = date_dayFmt(new Date(dd.getTime() - ((dayInWeek - i) * date_MS_IN_DAY)));
+				days.push("<td class='no-current-month' day='" + cd + "'>" + cd.substring(6, 8) + "</td>");
+			}
+			var ld = date_isleap(y) ? date_leapYear[m] : date_year[m];
+			for(var i = 0; i < ld; ++i) {
+				var cd = date_dayFmt(dd);
+				days.push("<td class='day-item' day='" + cd + "'>" + cd.substring(6, 8) + "</td>");
+				if(dd.getDay() == 6) days.push("</tr><tr>");
+				dd = date_incDay(dd);
+			}
+			dayInWeek = dd.getDay();
+			if(dayInWeek) {
+				for(var i = dayInWeek; i < 7; ++i) {
+					var cd = date_dayFmt(dd);
+					days.push("<td class='no-current-month' day='" + cd + "'>" + cd.substring(6, 8) + "</td>");
+					dd = date_incDay(dd);
+				}
+			} else {
+				days.pop();
+			}
+			days.push("</tr>");
+			body.html(days.join(""));
+		}
 	});
 	$.extend(Jform.prototype, {
 		init: function(options) {
@@ -775,6 +994,58 @@ function($) {
 	$.fn.form = FormPlugin;
 	$.fn.form.Constructor = Jform;
 	$.dictDefine = dict_define;
+	$.util = util;
+	
+	
+	var 
+	
+	SAP=function(ele){
+		this.ele = ele;
+		ele.data(DK_FORM_VALUE,this);
+		this.menu=ele.find(".sap-menu");
+		this.main=ele.find(".sap-main");
+		this.model = ele.find(".sap-model");
+		this.menuUri=ele.attr("menu");
+		this.mainCss=[];
+		
+		
+	};
+	
+	$.extend(SAP.prototype,{
+		init:function(){
+			this.menu.empty();
+			this.cleanModel();
+			this.cleanMain();
+			this.loadMenu((function(that){
+				return function(){
+					SAP.prototype.showMain.call(that);
+				};
+			})(this));
+			this.showMain();
+		},
+		loadMenu:function(h){
+			
+		},
+		cleanModel:function(){
+			
+		},
+		cleanMain:function(){
+			
+		},
+		showMain:function(){
+			
+		}
+	});
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	$(doc).on("click.jr_dropdown_api", dd_clearMenus);
 	$(doc).on("click.jr_dropdown_api", QF_DROP_DOWN_HAND, dd_toggle);
@@ -785,16 +1056,134 @@ function($) {
 		e.stopPropagation();
 	});
 
-	var dateTemplate = ["<div class='dd-drop date'><input class='YYYY' type='hidden'/><input class='MM' type='hidden'/>",
-		"<input class='DD' type='hidden'/><input class='HH' type='hidden'/><input class='MI' type='hidden'/>",
-		"<input class='SS' type='hidden'/><table><thead></thead><tbody></tbody><tfoot></tfoot></table>"].join("");
-$(doc).on("show", ".dd-ctn.date", function() {
-	var $dateCtn = $(this);
-	var date = $dateCtn.data(DK_FORM_VALUE);
-	if(date) {
-		$(dateTemplate).appendTo($dateCtn);
-		
-	}
-});
-
+	$(doc).on("show.jr.dropdown", ".dd-ctn.date,.dd-ctn.datetime,.dd-ctn.time", function() {
+		var $dateCtn = $(this);
+		var date = $dateCtn.data(DK_FORM_VALUE);
+		if(date && date.show) {
+			date.show();
+		}
+	});
+	$(doc).on("click", ".dd-ctn.date .day .day-item ,.dd-ctn.date .day .no-current-month", function() {
+		var $this = $(this);
+		var $dateCtn = $this.parents(".dd-ctn.date");
+		var date = $dateCtn.data(DK_FORM_VALUE);
+		if(date && date.val && $this.attr("day")) {
+			date.val($this.attr("day"));
+		}
+	});
+	$(doc).on("click", ".day .prev-year", function(e) {
+		var $this = $(this);
+		var table = $this.parents("table");
+		if(table) {
+			var year = table.attr("year");
+			if(year) {
+				var month = table.attr("month");
+				if(month) {
+					month = parseInt(month) - 1;
+					year = parseInt(year) - 1;
+					var dddrop = table.parents(".dd-drop.date");
+					if(dddrop) {
+						$ddc = dddrop.parents(".dd-ctn");
+						if($ddc) {
+							var date = $ddc.data(DK_FORM_VALUE);
+							if(date && date.showDay) {
+								date.showDay(dddrop, year, month);
+								e.stopPropagation();
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+	$(doc).on("click", ".day .prev-month", function(e) {
+		var $this = $(this);
+		var table = $this.parents("table");
+		if(table) {
+			var year = table.attr("year");
+			if(year) {
+				var month = table.attr("month");
+				if(month) {
+					month = parseInt(month) - 1;
+					year = parseInt(year);
+					if(month > 0) {
+						month--;
+					} else {
+						year--;
+						month = 11;
+					}
+					var dddrop = table.parents(".dd-drop.date");
+					if(dddrop) {
+						$ddc = dddrop.parents(".dd-ctn");
+						if($ddc) {
+							var date = $ddc.data(DK_FORM_VALUE);
+							if(date && date.showDay) {
+								date.showDay(dddrop, year, month);
+								e.stopPropagation();
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+	$(doc).on("click", ".day .next-year", function(e) {
+		var $this = $(this);
+		var table = $this.parents("table");
+		if(table) {
+			var year = table.attr("year");
+			if(year) {
+				var month = table.attr("month");
+				if(month) {
+					month = parseInt(month) - 1;
+					year = parseInt(year) + 1;
+					var dddrop = table.parents(".dd-drop.date");
+					if(dddrop) {
+						$ddc = dddrop.parents(".dd-ctn");
+						if($ddc) {
+							var date = $ddc.data(DK_FORM_VALUE);
+							if(date && date.showDay) {
+								date.showDay(dddrop, year, month);
+								e.stopPropagation();
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+	$(doc).on("click", ".day .next-month", function(e) {
+		var $this = $(this);
+		var table = $this.parents("table");
+		if(table) {
+			var year = table.attr("year");
+			if(year) {
+				var month = table.attr("month");
+				if(month) {
+					month = parseInt(month) - 1;
+					year = parseInt(year);
+					if(month == 11) {
+						year++;
+						month = 0;
+					} else {
+						month++;
+					}
+					var dddrop = table.parents(".dd-drop.date");
+					if(dddrop) {
+						$ddc = dddrop.parents(".dd-ctn");
+						if($ddc) {
+							var date = $ddc.data(DK_FORM_VALUE);
+							if(date && date.showDay) {
+								date.showDay(dddrop, year, month);
+								e.stopPropagation();
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+	$(doc).on("click", ".click-hide-parent", function() {
+		$(this).parent().hide();
+	});
 }(jQuery);
