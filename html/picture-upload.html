@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>头像上传</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<!--<link href="../css/mui.min.css" rel="stylesheet" />-->
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+			}
+			
+			body, html {
+				background-color: #000;
+				position: relative;
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+			}
+			
+			#dataImg {
+				display: none;
+			}
+			
+			#imgObj, #chooseObj, #touchObj {
+				position: absolute;
+				display: block;
+				box-sizing: border-box;
+				top:0;
+				left: 0;
+			}
+			
+			#imgObj {
+				z-index: 1;
+			}
+			
+			#chooseObj {
+				z-index: 2;
+				border-style: solid;
+				border-color: rgba(0,0,0,0.5);
+			}
+			
+			#touchObj {
+				z-index: 3;
+			}
+			
+			#canvas {
+				display: none;
+			}
+		
+			#canvas_btn {
+				position: absolute;
+				display: block;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 50px;
+				background-color: #fff;
+				z-index: 1000;
+			}
+			
+			#canvas_btn a {
+				float: left;
+				color: #222;
+				width: 60px;
+				line-height: 50px;
+				text-decoration: none;
+				text-align: center;
+			}
+			
+			#canvas_ok {
+				float: right!important;
+			}
+
+		</style>
+	</head>
+
+	<body>
+		<img id="dataImg">
+		<img id="imgObj" src="../image/bg1.jpg" />
+		<div id="chooseObj"></div>
+		<div id="touchObj"></div>
+		<div id="canvas_btn">
+			<a href="javascript:void(0);" id="canvas_cancel">取消</a>
+			<a href="javascript:void(0);" id="canvas_ok">完成</a>
+		</div>
+		<canvas id="canvas"></canvas>
+		<!--<script src="../js/public/mui.min.js"></script>
+	<script src="../js/public/base.js"></script>
+		<script src="../js/public/exif.js"></script>-->
+		<script src="../js/picture-upload.js"></script>
+	</body>
+
+</html>
