@@ -227,9 +227,9 @@ function($) {
 				head.appendChild(link);
 				return id;
 			},
-			removeCSS:function(id){
+			removeCSS: function(id) {
 				var node = doc.getElementById(id);
-				if(node){
+				if(node) {
 					head.removeChild(node);
 				}
 			},
@@ -246,7 +246,7 @@ function($) {
 						sh(rd.data);
 					} else {
 						if(eh) {
-							var eht = $.type(eht);
+							var eht = $.type(eh);
 							if(eht == TN_FNC) {
 								eh(rd.code, rd.msg, rd.detailMsg);
 							} else if(eht == TN_BOOL) {
@@ -263,7 +263,6 @@ function($) {
 									}
 								}
 							}
-
 						}
 					}
 				}).fail(function(jqXHR, textStatus, errorThrown) {
@@ -332,23 +331,35 @@ function($) {
 		dict_dictGuid = 1,
 		dict_handerArray = "handlers",
 		dict_baseUri = "/jr/js/ddict/",
-		dict_apply = function(dictCode, handler, dynamic) {
-			if(dynamic) {
-				var pt = Math.random().replace(/\D/g, "") + (++dict_dictGuid);
-				dict_dictHandleCache[pt] = [handler];
-				util.loadScript(dictCode + "?dictFlag=" + pt);
-			} else {
-				var dict = dict_dictCache[dictCode];
-				if(!dict) {
-					var hs = dict_dictHandleCache[dictCode];
-					if(!hs) {
-						dict_dictHandleCache[dictCode] = hs = [];
-						util.loadScript(dict_baseUri + dictCode + ".js");
+		dict_load = function(dictCode) {
+			util.showLoading();
+			$.ajax({ url: dict_baseUri + dictCode + ".json", type: "get", dataType: "json" }).done(function(data) {
+				util.hideLoading();
+				dict_dictCache[dictCode] = data;
+				var handlers = dict_dictHandleCache[dictCode];
+				if(handlers && handlers.length) {
+					for(var i = 0; i < handlers.length; ++i) {
+						handlers[i](data);
 					}
-					hs.push(handler);
-				} else {
-					handler(dict);
+					delete dict_dictHandleCache[dictCode];
 				}
+			}).fail(function() {
+				util.hideLoading();
+				var m = "load dict[" + dictCode + "] error";
+				util.error(m);
+			});
+		},
+		dict_apply = function(dictCode, handler) {
+			var dict = dict_dictCache[dictCode];
+			if(!dict) {
+				var hs = dict_dictHandleCache[dictCode];
+				if(!hs) {
+					dict_dictHandleCache[dictCode] = hs = [];
+					dict_load(dictCode);
+				}
+				hs.push(handler);
+			} else {
+				handler(dict);
 			}
 		},
 		dict_refresh = function(dictCode, handler) {
@@ -995,57 +1006,266 @@ function($) {
 	$.fn.form.Constructor = Jform;
 	$.dictDefine = dict_define;
 	$.util = util;
-	
-	
-	var 
-	
-	SAP=function(ele){
-		this.ele = ele;
-		ele.data(DK_FORM_VALUE,this);
-		this.menu=ele.find(".sap-menu");
-		this.main=ele.find(".sap-main");
-		this.model = ele.find(".sap-model");
-		this.menuUri=ele.attr("menu");
-		this.mainCss=[];
-		
-		
+
+	var DK_CODE_TEMPLATE_FUNC = "code_templat_func",
+		reg_strikethrough_all = /-/g,
+		g_codeRef = 1,
+
+		parseCodeTemplate = function(ele, handlers) {
+			var hds = handlers;
+			ele.children(".code-template").each(function() {
+				var $this = $(this);
+				var key = $this.attr("code-func");
+				if(key) {
+					var cf = "_" + g_codeRef;
+					++g_codeRef;
+					hds[cf] = parseCodeTemplate($this, hds);
+					var ccode = "{{" + key + "-" + cf + "}}";
+					if($this.attr("tag-hlod")) {
+						$this.html(ccode);
+					} else {
+						//doc.createTextNode("{{"+key+"-"+cf+"}}");
+						//this.parentNode.replaceChild(this,doc.createTextNode("{{"+key+"-"+cf+"}}"));
+						this.parentNode.insertBefore(document.createTextNode("{{" + key + "-" + cf + "}}"), this);
+						//replaceChild(this,document.createTextNode("{{"+key+"-"+cf+"}}"));
+						$this.remove();
+					}
+				}
+			});
+			var src = $.trim(ele.html());
+			console.log(src);
+			var ret = [],
+				index = 0,
+				len = src.length,
+				b, e, ni;
+			while(index < len) {
+				b = src.indexOf('{{', index);
+				if(b != -1) {
+					ni = b + 2;
+					var e = src.indexOf('}}', ni);
+					if(e == -1) break;
+					if(b > index) {
+						ret.push({
+							f: "_copy",
+							k: null,
+							pv: [src.substring(index, b)]
+						});
+					}
+					if(e > ni) {
+						var sh = src.substring(ni, e);
+						var shlist = sh.split('-');
+						var h = {
+							pv: []
+						};
+						h.k = shlist[0];
+
+						if(shlist.length == 1) {
+							h.f = "toString";
+						} else {
+							h.f = shlist[1];
+							for(var i = 2; i < shlist.length; ++i) {
+								h.pv.push(shlist[i]);
+							}
+						}
+						h.pv.push(sh);
+						ret.push(h);
+					}
+					index = e + 2;
+				} else {
+					break;
+				}
+			}
+			if(index < len) {
+				ret.push({
+					f: "_copy",
+					k: null,
+					pv: [src.substring(index, len)]
+				});
+			}
+			return function(data) {
+				var r = [];
+				for(var i = 0; i < ret.length; ++i) {
+					var pa = [];
+					var h = ret[i];
+					pa.push(data);
+					pa.push(h.k);
+					if(h.pv && h.pv.length) {
+						for(var k = 0; k < h.pv.length; ++k) {
+							pa.push(h.pv[k]);
+						}
+					}
+					pa.push(hds);
+					h = hds[h.f] || hds["_def"];
+					r.push(h.apply(null, pa));
+				}
+				return r.join("");
+			}
+		},
+
+		hc_base_fnc = {
+			/**
+			 * def handler
+			 */
+			"_def": function() {
+				return "<!--" + arguments[arguments.length - 2].replace(reg_strikethrough_all, ' - ') + "-->";
+			},
+			/*toString   {{dKey[-privateArg]*}}       
+			 {{a-b-c-d-f}}
+			 dKey = 'a'
+			 privateArrgList is 'b','c','d','f'
+			 shellContext='a-b-c-d-f'
+			 handlers :{"b":function(data, dKey[,privateArgList...],  shellContext,handlers)}
+			 
+			 * */
+			"toString": function(data, dKey /*[,privateArgList...]*/ , shellContext, handlers) {
+				var v = data[dKey];
+				return v ? v.toString() : (v === 0 ? "0" : (v === false ? "false" : ""));
+			},
+			"_copy": function(data, key, s) {
+				return s
+			},
+
+			"list": function(data, dKey, fn) {
+				var v = data[dKey],
+					hds = arguments[arguments.length - 1],
+					r = [];
+				if(v && v.length) {
+					for(var i = 0; i < v.length; ++i) {
+						var h = hds[fn] || hds["_def"];
+						r.push(h(v[i]));
+					}
+				}
+				return r.join("");
+			}
+		},
+
+		HtmlCode = function(ele) {
+			this.ele = ele;
+			this.cache = ele.attr("cacheCode") ? true : false;
+			this.fnc = {};
+			$.extend(this.fnc, hc_base_fnc);
+			ele.data(DK_CODE_TEMPLATE_FUNC, this);
+		};
+
+	$.extend(HtmlCode.prototype, {
+		val: function(data) {
+			if(arguments.length) {
+				if(!this.hand) {
+					this.hand = parseCodeTemplate(this.ele, this.fnc, this.noHand);
+				}
+				console.log(this.hand(data));
+				this.ele.html(this.hand(data));
+			}
+		},
+		shell: function(name, func) {
+			if(name) {
+				if(func) {
+					this.fnc[name] = func;
+				} else {
+					return this.fnc[name];
+				}
+			} else {
+				return this.fnc;
+			}
+		},
+	});
+	var CodePlugin = function(val) {
+		if(this.length) {
+			var code = $(this[0]);
+			var ret = code.data(DK_CODE_TEMPLATE_FUNC);
+			if(!ret) {
+				ret = new HtmlCode(code);
+			}
+			return ret;
+		}
 	};
-	
-	$.extend(SAP.prototype,{
-		init:function(){
-			this.menu.empty();
+	$.fn.code = CodePlugin;
+	$.fn.code.Constructor = HtmlCode;
+
+	var
+		spa_load_res = function(that) {
+			if(that.resUri) {
+				util.get(that.resUri, null, function(res) {
+					that.res = data;
+					if(that.menuUri) {
+						spa_load_menu(that);
+					} else {
+						spa_show_main(that);
+					}
+				}, function(errCode, errMsg, errDetailMsg) {
+					util.error("load spa resource error");
+				})
+			}
+		},
+		spa_load_menu = function(that) {
+			util.get(that.menuUri, null, function(menu) {
+				that.menu = menu;
+				spa_bulid_menu(that);
+			    spa_show_main(that);
+			}, function(errCode, errMsg, errDetailMsg) {
+				util.error("load spa menu data error");
+			});
+		},
+		spa_bulid_menu=function(that){
+			if(that.menuEle && that.menu){
+				if(that.bulidMenu){
+					that.bulidMenu();
+				}else{
+					var ele = that.menuEle;
+					var pEle =$("<ul class='spa-menu-root'></ul>");
+					for(var i = 0 ; i < that.menu.length ;++i){
+						spa_bulid_menu_item(pEle,that.menu[i]);			
+					}
+				}
+			}
+		},
+		spa_bulid_menu_item=function(pele,items){
+			
+		},
+		spa_show_main = function(that) {
+
+		},
+		SPA = function(ele,mainId) {
+			this.ele = ele;
+			ele.data(DK_FORM_VALUE, this);
+			this.menuEle = ele.find(".spa-menu");
+			this.mainEle = ele.find(".spa-main");
+			this.modelEle = ele.find(".spa-model");
+			this.menuUri = ele.attr("menu");
+			this.resUri = ele.attr("resource");
+			this.mainCss = [];
+			this.mainScript = [];
+			this.modelCss = [];
+			this.modelScript = [];
+			this.mainId=mainId;
+		};
+
+	$.extend(SPA.prototype, {
+		init: function() {
+			this.menuEle.empty();
 			this.cleanModel();
 			this.cleanMain();
-			this.loadMenu((function(that){
-				return function(){
+
+			this.loadMenu((function(that) {
+				return function() {
 					SAP.prototype.showMain.call(that);
 				};
 			})(this));
 			this.showMain();
 		},
-		loadMenu:function(h){
-			
+		loadMenu: function(h) {
+
 		},
-		cleanModel:function(){
-			
+		cleanModel: function() {
+
 		},
-		cleanMain:function(){
-			
+		cleanMain: function() {
+
 		},
-		showMain:function(){
-			
+		showMain: function() {
+
 		}
 	});
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
 	$(doc).on("click.jr_dropdown_api", dd_clearMenus);
 	$(doc).on("click.jr_dropdown_api", QF_DROP_DOWN_HAND, dd_toggle);

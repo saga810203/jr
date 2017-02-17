@@ -38,7 +38,7 @@
 			<div class="row">
 				<div class="col-2 item-caption required"> 中国</div>
 				<div class="col-4">
-					<div class="form-item tree mselect " dictCode="booldd" name="cc" defVal="4"></div>
+					<div class="form-item tree mselect " dictCode="bool" name="cc" defVal="4"></div>
 				</div>
 				<div class="col-6">
 					<div class="form-item date  " name="dd" defVal="current"></div>
@@ -46,31 +46,52 @@
 			</div>
 
 		</div>
-		<i class="icon-resize"></i>
-
 		<div id='g_info'>
 			<div id='g_err'>
-				
+
 			</div>
 			<div id='g_warn'>
-				
+
 			</div>
 			<div id='g_msg'>
-				
 
 			</div>
 		</div>
-		<div id='g_loading' style="display: none;"><i class='icon icon-spin icon-spinner-snake'><div>
+		<div id='g_loading'><div><i class='icon icon-spin icon-spinner-snake'></i></div></div>
+
+		<div id="codeTest">
+			{{aa}}
+			<div class="code-template" code-func="cc-list"><div>{{cc}}</div></div>
+			{{bb}}
+
+		</div>
+
 	</body>
 	<script type="text/javascript" src="js/jquery-1.12.4.js"></script>
 	<script type="text/javascript" src="js/base1.js"></script>
 	<script>
 		$(function() {
+			var g_codeRef=1;
 			$("#ff").form();
 			//			console.log($("#ff").attr("id"));
 			//			console.log($("#ff").prop("id"));
-	//		console.log($("#ff").attr("yyyy") ? "1" : "0");
-	//		console.log($("#ff").prop("yyyy") ? "1" : "0");
+			//		console.log($("#ff").attr("yyyy") ? "1" : "0");
+			//		console.log($("#ff").prop("yyyy") ? "1" : "0");
+
+			$("#codeTest").code().val({ aa: "df", bb: "中国", cc: [{ cc: "dd" },{cc:"ee"}] });
+//			$("#codeTest").children(".code-template").each(function(){
+//				var $this = $(this);
+//				var key = $this.attr("code-func");
+//				if(key) {
+//					var cf ="_"+g_codeRef;
+//					++g_codeRef;
+//					//ph[cf] = parseCodeTemplate($this, ph, df);
+//					//doc.createTextNode("{{"+key+"-"+cf+"}}");
+//					this.parentNode.insertBefore(document.createTextNode("{{"+key+"-"+cf+"}}"),this);
+//					//replaceChild(this,document.createTextNode("{{"+key+"-"+cf+"}}"));
+//					$this.remove();
+//				}
+//			});
 
 		});
 	</script>

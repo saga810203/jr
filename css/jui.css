@@ -1528,6 +1528,45 @@ pre {
 }
 
 
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+    }
+  100% {
+    -webkit-transform: rotate(359deg);
+            transform: rotate(359deg);
+    }
+  }
+@-o-keyframes spin {
+  0% {
+    -o-transform: rotate(0deg);
+       transform: rotate(0deg);
+    }
+  100% {
+    -o-transform: rotate(359deg);
+       transform: rotate(359deg);
+    }
+  }
+@keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+         -o-transform: rotate(0deg);
+            transform: rotate(0deg);
+    }
+  100% {
+    -webkit-transform: rotate(359deg);
+         -o-transform: rotate(359deg);
+            transform: rotate(359deg);
+    }
+  }
+.icon-spin {
+    display: inline-block;
+    -webkit-animation: spin 2s infinite linear;
+    -o-animation: spin 2s infinite linear;
+    animation: spin 2s infinite linear;
+}
+
 /** 初始化全局标签 **/
 
 body {
@@ -1654,11 +1693,33 @@ a cite {
     z-index: 9999999;
     top: 0;
     width: 100%;
-    /*opacity: .01;
-    filter: Alpha(opacity=1);*/
+
 }
 
-#g_info > div {}
+
+#g_loading{
+	position: absolute;
+	z-index: 9999998;
+	top:0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	   opacity: .5;
+	   background-color: #245269;
+    filter: Alpha(opacity=50);
+}
+#g_loading div{
+    position: absolute;
+    top:50%;
+    left: 50%;
+    margin: -50px auto 0 -50px;
+    font-family: jIcon;
+    font-size:100px;
+}
+#g_loading div i:before{
+font-size: 100px;}
+
+
 
 
 .err-ctn,.warn-ctn,.msg-ctn{
@@ -2068,4 +2129,8 @@ a cite {
 
 .form-item.showOnly .select-caption div {
     display: none;
+}
+
+.code-template{
+	display:none !important;
 }
