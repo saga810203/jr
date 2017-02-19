@@ -111,7 +111,9 @@ function($) {
 		_warnDiv = $("#g_warn"),
 		_msgDiv = $("#g_msg"),
 		_loadingDiv = $("#g_loading"),
-		_g_css_ref = 1;
+		_g_css_ref = 1,
+		_g_script_ref =1,
+		_g_err_msg={};
 	_g_loadRef = 0;
 
 	util = {
@@ -183,12 +185,10 @@ function($) {
 				node.src = url;
 				node.charset = "UTF-8";
 				var supportOnload = "onload" in node;
-				util.msg("begin load script " + url);
 				util.showLoading();
 				if(supportOnload) {
 					//todo:dddd
 					node.onload = function() {
-						util.msg("load script success:" + url);
 						node.onerror = null;
 						node.onload = null;
 						util.hideLoading();
@@ -233,7 +233,9 @@ function($) {
 					head.removeChild(node);
 				}
 			},
-
+			regErrorHandler:function(key,handler){
+				_g_err_msg[key] = handler;
+			},
 			ajax: function(method, pUrl, pData, sh, eh) {
 				util.showLoading();
 				$.ajax({
@@ -254,10 +256,11 @@ function($) {
 									util.error("load resource error:" + pUrl + "\n" + (rd.detailMsg ? rd.detailMsg : ""));
 								}
 							} else {
-								var msg = eh[rd.code];
+								
+								var msg = eh[""+rd.code]||_g_err_msg[""+rd.code];
 								if(msg) {
 									if($.type(msg) == TN_FNC) {
-										msg();
+										msg(rd.code,rd.msg,rd.detailMsg);
 									} else {
 										util.error(msg ? msg : "未定义的错误");
 									}
@@ -1182,50 +1185,69 @@ function($) {
 	$.fn.code = CodePlugin;
 	$.fn.code.Constructor = HtmlCode;
 
-	var
-		spa_load_res = function(that) {
-			if(that.resUri) {
-				util.get(that.resUri, null, function(res) {
-					that.res = data;
-					if(that.menuUri) {
-						spa_load_menu(that);
+	var _spa_script_ref =1,
+		spa_load_res = function() {
+			var self = this;
+			if(this.resUri) {
+				util.get(self.resUri, null, function(res) {
+					/**
+					 * res ={id_key:{uri:"",css:"",script:""},id_key2:{uri:"",css:"",script:""},...........}
+					 */
+					self.res = data;
+					if(self.menuUri) {
+						self.loadMenu();
 					} else {
-						spa_show_main(that);
+						self.showMain();
 					}
 				}, function(errCode, errMsg, errDetailMsg) {
 					util.error("load spa resource error");
 				})
 			}
 		},
-		spa_load_menu = function(that) {
-			util.get(that.menuUri, null, function(menu) {
-				that.menu = menu;
-				spa_bulid_menu(that);
-			    spa_show_main(that);
+		spa_load_menu = function() {
+			var self = this;
+			util.get(this.menuUri, null, function(menu) {
+				self.menu = menu;
+				self.buildMenu();
+				self.showMain();
 			}, function(errCode, errMsg, errDetailMsg) {
 				util.error("load spa menu data error");
 			});
 		},
-		spa_bulid_menu=function(that){
-			if(that.menuEle && that.menu){
-				if(that.bulidMenu){
-					that.bulidMenu();
-				}else{
-					var ele = that.menuEle;
-					var pEle =$("<ul class='spa-menu-root'></ul>");
-					for(var i = 0 ; i < that.menu.length ;++i){
-						spa_bulid_menu_item(pEle,that.menu[i]);			
-					}
+		spa_build_menu=function(){
+			if(this.menuEle && that.menu){
+				var ele = that.menuEle;
+				var pEle =$("<ul class='spa-menu-root'></ul>");
+				for(var i = 0 ; i < that.menu.length ;++i){
+					spa_build_menu_item(this,pEle,that.menu[i]);			
 				}
+				pEle.appendTo(this.menuEle);
 			}
 		},
-		spa_bulid_menu_item=function(pele,items){
-			
+		spa_build_menu_item=function(that,pEle,items){
+			var item,res,caption,iconClass;
+			for(var i = 0 ; i < items.length;++i){
+				item = items[i];
+				var $li = $("<li></li>");
+				var $a =("<a href='javascript:;'></a>").appendTo($li);
+				caption = item.caption；
+				iconClass = item.icon||(item.res?"book":"brance");
+				$a.html("<i class='icon-"+iconClass+"'></i>"+caption);
+				if(item.res){
+					$a.attr("res",item.res);
+					if(item.model){
+						$a.addClass("spa-model");
+					}
+				}else{
+					var main			$a.append($("<i class='icon-fold'></i>"));
+					var $ul =$("<ul></ul>").appendTo($li);
+					spa_build_menu_item(that.$ul,item.children);
+				}
+				$li.appendTo(pEle);
+			}
 		},
-		spa_show_main = function(that) {
 
-		},
-		SPA = function(ele,mainId) {
+		SPA = function(ele) {
 			this.ele = ele;
 			ele.data(DK_FORM_VALUE, this);
 			this.menuEle = ele.find(".spa-menu");
@@ -1233,11 +1255,9 @@ function($) {
 			this.modelEle = ele.find(".spa-model");
 			this.menuUri = ele.attr("menu");
 			this.resUri = ele.attr("resource");
-			this.mainCss = [];
-			this.mainScript = [];
-			this.modelCss = [];
-			this.modelScript = [];
-			this.mainId=mainId;
+			this.loadResource = spa_load_res;
+			this.loadMenu = spa_load_menu;
+			this.buildMenu = spa_build_menu;
 		};
 
 	$.extend(SPA.prototype, {
@@ -1245,16 +1265,7 @@ function($) {
 			this.menuEle.empty();
 			this.cleanModel();
 			this.cleanMain();
-
-			this.loadMenu((function(that) {
-				return function() {
-					SAP.prototype.showMain.call(that);
-				};
-			})(this));
-			this.showMain();
-		},
-		loadMenu: function(h) {
-
+			this.loadResource();			
 		},
 		cleanModel: function() {
 
@@ -1262,9 +1273,86 @@ function($) {
 		cleanMain: function() {
 
 		},
-		showMain: function() {
-
-		}
+		showMain: function(id) {
+			if(!id){
+				id = location.hash;
+				if(id && id.length>1){
+					id = id.substring(1);
+				}else return;
+			}
+			if(this.main && id==this.main.id) return;
+			this.cleanModel();
+			this.cleanMain();
+			var mainObj = this.res[id];
+			if(mainObj){
+				this.main = $.extend({},mainObj);
+				this.main.id =id;
+				this.loadMain();
+				
+			}else{
+				util.error("invalid resource id["+id+"]");
+			}
+		},
+		loadMain:function(){
+			var  model = this.main,self = this;
+			util.showLoading();
+			$.ajax({url:model.uri,dataType:"html",type:"GET"}).done(function(data){
+				model.html = data;
+				util.hideLoading();
+				self.loadMainCss();
+				self.loadMainScript();
+			}).fail(function(){
+				util.hideLoading();
+				util.error("load resource["+model.id+"] error");
+			});
+		},
+		loadMainCss:function(){
+			if(this.main.css){
+				var link = this.main.link = doc.createElement('link');
+				link.rel = 'stylesheet';
+				link.href = this.main.css;
+				link.media = 'all';
+				head.appendChild(link);				
+			}
+		},
+		loadMainScript:function(){
+			var model= this.main, self = this;
+			var node =model.scriptNode = doc.createElement(EN_SCRIPT);
+			node.async = CK_TRUE;
+			node.src = model.script;
+			node.charset = "UTF-8";
+			var supportOnload = "onload" in node;
+			util.showLoading();
+			if(supportOnload) {
+				node.onload = function() {
+					node.onerror = null;
+					node.onload = null;
+					util.hideLoading();
+				};
+				//todo:dddd
+				node.onerror = function() {
+					util.error("load script error:" + url);
+					node.onload = null;
+					node.onerror = null;
+					util.hideLoading();
+				};
+			} else {
+				//todo:dddd
+				node.onreadystatechange = function() {
+					if(/loaded|complete/.test(node.readyState)) {
+						node.onreadystatechange = null;
+						util.msg("load script over:" + url);
+						util.hideLoading();
+					}
+				};
+			}
+			baseElement ?
+				head.insertBefore(node, baseElement) :
+				head.appendChild(node);
+			
+			
+			
+		},
 	});
 
 	$(doc).on("click.jr_dropdown_api", dd_clearMenus);
