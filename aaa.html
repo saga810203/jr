@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			#img {
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				z-index: -1;
+			}
+			
+			#div {
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				z-index: 1;
+				right: 0px;
+				bottom: 0px;
+				z-index: 2;
+				border-style: solid;
+				border-color: rgba(0, 0, 0, 0.5);
+				border-width: 100px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="cc" style="position: relative;">
+			<div style="position: absolute;top:0px;left: 0px; box-sizing:border-box;width: 400px;height: 400px;overflow: hidden;position: relative;">
+				<img id="img" src="image/bg1.jpg" onload="ready()" />
+				<div id="div">
+				</div>
+			</div>
+			<div style=" position: absolute;top:0px;left: 410px; box-sizing:border-box;width: 400px;height: 400px;overflow: hidden;position: relative;">
+				<img id="img2" />
+			</div>
+		</div>
+		Width:<input id="w" type="text" /><br /> Height:
+		<input id="h" type="text" /><br /> Left:
+		<input id="l" type="text" /><br /> Top:
+		<input id="t" type="text" /><br /> Arc:
+		<input id="a" type="text" /><br />
+		<button type="button" onclick="btnClick()">CHANGE</button>
+
+	</body>
+	<script>
+		var imgStyle = { l: 0, t: 0, w: 400, h: 400, arc: 0, ow: 0, oh: 0 };
+
+		function $(selector) {
+			return document.querySelector(selector);
+		}
+
+		function paint(can, img) {
+			var ctx = can.getContext("2d");
+			var bW = 400; //选择区域的宽度(含阴影边框)
+			var bH = 400; //选择区域的高度(含阴影边框)
+			var bL = 100; //选择区域的左边框（== 右边框）
+			var bT = 100; //选择区域的上边框（== 下边框）
+
+			var sx, sy, sw, sh, rx, ry, realW, realY, dx = 0,cW=bW-bL-bL,cH=bH-bT-bT,
+				dy = 0,
+				dw,
+				dh;
+			rx = imgStyle.ow / imgStyle.w;
+			ry = imgStyle.oh / imgStyle.h;
+			
+			dw =bW-bL-imgStyle.l;
+			dh =bH-bT-imgStyle.t;
+			if(dw>cW)dw =cW;
+			if(dh>cH)dh=cH;
+			sw = Math.round(dw * rx);
+			sh = Math.round(dh * ry);
+			
+			sx = Math.round((bL - imgStyle.l) * rx);
+			sy = Math.round((bT - imgStyle.t) * ry);
+			if(sx<0){
+				dx = imgStyle.l-bL;
+				sx = 0;
+			}
+			if(sy<0){
+				dy = imgStyle.t-bT;
+				sy = 0;
+			}
+			
+			console.log(imgStyle)
+			console.log({ sx: sx, sy: sy, sw: sw, sh: sh, dx: dx, dy: dy, dw: dw, dh: dh, ow: imgStyle.ow, oh: imgStyle.oh, rx: rx, ry: ry });
+			ctx.fillStyle = "yellow";
+			ctx.fillRect(0, 0, 200, 200)
+			if(imgStyle.arc){
+				ctx.save();
+				ctx.translate(100,100);
+				ctx.rotate(imgStyle.arc*Math.PI/180);
+				ctx.translate(-100,-100);
+				ctx.drawImage(img, sx-1000*rx, sy-1000*ry, sw+1000*rx, sh+1000*ry, dx-1000, dy-1000, dw+1000, dh+1000);
+				ctx.restore();
+			}else{
+				ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+			}
+			console.log({ sx: sx, sy: sy, sw: sw, sh: sh, dx: dx, dy: dy, dw: dw, dh: dh, ow: imgStyle.ow, oh: imgStyle.oh, rx: rx, ry: ry });
+		}
+
+		function rotate(can, img) {
+			var w = imgStyle.ow,h=imgStyle.oh;
+			can.width = w;
+			can.height = h;
+			var ctx = can.getContext("2d");
+			ctx.save();
+			ctx.translate(w / 2, h / 2);
+			ctx.rotate(imgStyle.arc * Math.PI / 180);
+			ctx.drawImage(img, -w/2, -h/2)//, w,h, 0, 0, w, h);
+			ctx.restore();
+//can.width=img.height; 
+//can.height=img.width; 
+//var ctx = can.getContext("2d"); 
+//ctx.save(); 
+//ctx.translate(img.height/2,img.width/2); 
+//ctx.rotate(270*Math.PI/180); 
+//ctx.drawImage(img,-img.width/2,-img.height/2); 
+//ctx.restore();
+		}
+
+		function change() {
+			var img = $("#img"),
+				can, img2 = $("#img2");
+			img.setAttribute("style", "top:" + imgStyle.t + "px;left:" + imgStyle.l + "px;width:" + imgStyle.w + "px;height:" + imgStyle.h + "px;transform:rotate(" + imgStyle.arc + "deg);");
+			can = $("#can");
+			if(can) {
+				can.parentNode.removeChild(can);
+				can = null;
+
+			}
+			can = document.createElement("canvas");
+			can.width = 200;
+			can.height = 200;
+			can.style.display = "none";
+			$("#cc").appendChild(can);
+
+			paint(can, img);
+			//rotate(can,img);
+			img2.src = can.toDataURL();
+
+		}
+
+		function ready() {
+			var img = $("#img");
+
+			imgStyle.ow = img.width;
+			imgStyle.oh = img.height;
+
+		}
+
+		function btnClick() {
+			imgStyle.l = parseInt($("#l").value);
+			imgStyle.t = parseInt($("#t").value);
+			imgStyle.w = parseInt($("#w").value);
+			imgStyle.h = parseInt($("#h").value);
+			imgStyle.arc = parseInt($("#a").value);
+			console.log(imgStyle);
+			change();
+		}
+	</script>
+
+</html>
