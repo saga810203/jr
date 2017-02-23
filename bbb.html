@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<style>
+	.modal-window{
+		position: absolute;
+		left: 0;
+		top:0;
+		right: 0;
+		z-index:5000000;
+		background-color: rgba(0,0,0,.3);
+		color: red;
+	}
+	.modal-window{
+		position: absolute;
+		left: 0;
+		top:0;
+		right: 0;
+		z-index:5000000;
+		background-color: rgba(0,0,0,.3);
+		color: red;
+	}
+	.modal-window.modal-parent{
+
+		background-color: transparent;
+	}
+	
+</style>
+	<body>
+
+	
+		<button type="button" onclick="ff()">FFFF</button>
+		<script src="js/jquery-1.12.4.js" type="text/javascript"></script>
+		<script>
+			var _g_curr_mw = $("body");
+		
+			function cm() {
+			   if(_g_curr_mw.hasClass("modal-window"))	_g_curr_mw.addClass("modal-parent");
+				return _g_curr_mw=$("<div class='modal-window'></div>").appendTo(_g_curr_mw);
+			}
+			function ff(){
+				cm().html((new Date()).toGMTString());				
+				
+			}
+			
+		</script>
+
+	</body>
+
+</html>

@@ -112,8 +112,8 @@ function($) {
 		_msgDiv = $("#g_msg"),
 		_loadingDiv = $("#g_loading"),
 		_g_css_ref = 1,
-		_g_script_ref =1,
-		_g_err_msg={};
+		_g_script_ref = 1,
+		_g_err_msg = {};
 	_g_loadRef = 0;
 
 	util = {
@@ -233,7 +233,7 @@ function($) {
 					head.removeChild(node);
 				}
 			},
-			regErrorHandler:function(key,handler){
+			regErrorHandler: function(key, handler) {
 				_g_err_msg[key] = handler;
 			},
 			ajax: function(method, pUrl, pData, sh, eh) {
@@ -256,11 +256,11 @@ function($) {
 									util.error("load resource error:" + pUrl + "\n" + (rd.detailMsg ? rd.detailMsg : ""));
 								}
 							} else {
-								
-								var msg = eh[""+rd.code]||_g_err_msg[""+rd.code];
+
+								var msg = eh["" + rd.code] || _g_err_msg["" + rd.code];
 								if(msg) {
 									if($.type(msg) == TN_FNC) {
-										msg(rd.code,rd.msg,rd.detailMsg);
+										msg(rd.code, rd.msg, rd.detailMsg);
 									} else {
 										util.error(msg ? msg : "未定义的错误");
 									}
@@ -1185,7 +1185,7 @@ function($) {
 	$.fn.code = CodePlugin;
 	$.fn.code.Constructor = HtmlCode;
 
-	var _spa_script_ref =1,
+	var _spa_script_ref = 1,
 		spa_load_res = function() {
 			var self = this;
 			if(this.resUri) {
@@ -1214,34 +1214,34 @@ function($) {
 				util.error("load spa menu data error");
 			});
 		},
-		spa_build_menu=function(){
-			if(this.menuEle && that.menu){
+		spa_build_menu = function() {
+			if(this.menuEle && that.menu) {
 				var ele = that.menuEle;
-				var pEle =$("<ul class='spa-menu-root'></ul>");
-				for(var i = 0 ; i < that.menu.length ;++i){
-					spa_build_menu_item(this,pEle,that.menu[i]);			
+				var pEle = $("<ul class='spa-menu-root'></ul>");
+				for(var i = 0; i < that.menu.length; ++i) {
+					spa_build_menu_item(this, pEle, that.menu[i]);
 				}
 				pEle.appendTo(this.menuEle);
 			}
 		},
-		spa_build_menu_item=function(that,pEle,items){
-			var item,res,caption,iconClass;
-			for(var i = 0 ; i < items.length;++i){
+		spa_build_menu_item = function(that, pEle, items) {
+			var item, res, caption, iconClass;
+			for(var i = 0; i < items.length; ++i) {
 				item = items[i];
 				var $li = $("<li></li>");
-				var $a =("<a href='javascript:;'></a>").appendTo($li);
+				var $a = ("<a href='javascript:;'></a>").appendTo($li);
 				caption = item.caption；
-				iconClass = item.icon||(item.res?"book":"brance");
-				$a.html("<i class='icon-"+iconClass+"'></i>"+caption);
-				if(item.res){
-					$a.attr("res",item.res);
-					if(item.model){
+				iconClass = item.icon || (item.res ? "book" : "brance");
+				$a.html("<i class='icon-" + iconClass + "'></i>" + caption);
+				if(item.res) {
+					$a.attr("res", item.res);
+					if(item.model) {
 						$a.addClass("spa-model");
 					}
-				}else{
-					var main			$a.append($("<i class='icon-fold'></i>"));
-					var $ul =$("<ul></ul>").appendTo($li);
-					spa_build_menu_item(that.$ul,item.children);
+				} else {
+					var main $a.append($("<i class='icon-fold'></i>"));
+					var $ul = $("<ul></ul>").appendTo($li);
+					spa_build_menu_item(that.$ul, item.children);
 				}
 				$li.appendTo(pEle);
 			}
@@ -1265,93 +1265,140 @@ function($) {
 			this.menuEle.empty();
 			this.cleanModel();
 			this.cleanMain();
-			this.loadResource();			
+			this.loadResource();
 		},
 		cleanModel: function() {
 
 		},
 		cleanMain: function() {
-
+			if(this.main) {
+				if(this.main.link) {
+					head.removeChild(this.main.link);
+				}
+				if(this.main.destroy){
+					this.main.destroy.call(this.main);
+				}
+				this.main = null;
+				this.mainEle.empty();
+			}
 		},
 		showMain: function(id) {
-			if(!id){
+			if(!id) {
 				id = location.hash;
-				if(id && id.length>1){
+				if(id && id.length > 1) {
 					id = id.substring(1);
-				}else return;
+				} else return;
 			}
-			if(this.main && id==this.main.id) return;
+			if(this.main && id == this.main.id) return;
 			this.cleanModel();
 			this.cleanMain();
 			var mainObj = this.res[id];
-			if(mainObj){
-				this.main = $.extend({},mainObj);
-				this.main.id =id;
+			if(mainObj) {
+				this.main = $.extend({}, mainObj);
+				this.main.id = id;
+				this.main.state = 0;
 				this.loadMain();
-				
-			}else{
-				util.error("invalid resource id["+id+"]");
+			} else {
+				util.error("invalid resource id[" + id + "]");
 			}
 		},
-		loadMain:function(){
-			var  model = this.main,self = this;
-			util.showLoading();
-			$.ajax({url:model.uri,dataType:"html",type:"GET"}).done(function(data){
-				model.html = data;
-				util.hideLoading();
+		loadMain: function() {
+			var model = this.main,
+				self = this;
+			if(model.uri) {
+				util.showLoading();
+				model.state = 10;
+				$.ajax({ url: model.uri, dataType: "html", type: "GET" }).done(function(data) {
+					model.state = 11;
+					model.html = data;
+					util.hideLoading();
+					self.loadMainCss();
+					self.loadMainScript();
+				}).fail(function() {
+					model.state = 12;
+					util.hideLoading();
+					util.error("load resource[" + model.id + "] error");
+				});
+			} else {
 				self.loadMainCss();
 				self.loadMainScript();
-			}).fail(function(){
-				util.hideLoading();
-				util.error("load resource["+model.id+"] error");
-			});
+			}
 		},
-		loadMainCss:function(){
-			if(this.main.css){
+		loadMainCss: function() {
+			if(this.main.css) {
 				var link = this.main.link = doc.createElement('link');
 				link.rel = 'stylesheet';
 				link.href = this.main.css;
 				link.media = 'all';
-				head.appendChild(link);				
+				head.appendChild(link);
 			}
 		},
-		loadMainScript:function(){
-			var model= this.main, self = this;
-			var node =model.scriptNode = doc.createElement(EN_SCRIPT);
+		loadMainScript: function() {
+			var model = this.main,
+				self = this;
+			var node = model.scriptNode = doc.createElement(EN_SCRIPT);
 			node.async = CK_TRUE;
 			node.src = model.script;
 			node.charset = "UTF-8";
 			var supportOnload = "onload" in node;
 			util.showLoading();
+			$.defineMain = function(handler) {
+				model.state = 30;
+				util.showLoading();
+				try {
+					handler.call(window, self, model, model.mainEle);
+					if(main.html)
+						self.mainEle.html(model.html);
+					if(model.init) model.init.call(model);
+					head.removeChild(node);
+					model.state = 31;
+					util.hideLoading();
+				} catch(error) {
+					model.state = 32;
+					head.removeChild(node);
+					util.hideLoading();
+					util.error("init main error");
+				}
+			}
+
 			if(supportOnload) {
 				node.onload = function() {
+					if(model.state < 21) model.state = 21;
 					node.onerror = null;
 					node.onload = null;
 					util.hideLoading();
 				};
-				//todo:dddd
 				node.onerror = function() {
-					util.error("load script error:" + url);
+					model.state = 22;
+					util.error("load script error:" + model.script);
 					node.onload = null;
 					node.onerror = null;
 					util.hideLoading();
 				};
 			} else {
-				//todo:dddd
 				node.onreadystatechange = function() {
 					if(/loaded|complete/.test(node.readyState)) {
 						node.onreadystatechange = null;
-						util.msg("load script over:" + url);
-						util.hideLoading();
+						if(model.state < 21) {
+							model.state = 21;
+							var to = model.timeout || 1000;
+							setTimeout(function() {
+								if(model.state == 21) {
+									model.state = 22;
+									util.error("load script error:" + model.script);
+									util.hideLoading();
+								}
+							}, model.timeout || 1000);
+						} else {
+							util.hideLoading();
+						}
 					}
 				};
 			}
+			model.state = 20;
 			baseElement ?
 				head.insertBefore(node, baseElement) :
 				head.appendChild(node);
-			
-			
-			
 		},
 	});
 

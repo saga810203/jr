@@ -24,17 +24,42 @@
 				border-color: rgba(0, 0, 0, 0.5);
 				border-width: 100px;
 			}
+			
+			#divx {
+				position: absolute;
+				top: 200px;
+				left: -500px;
+				z-index: 1;
+				right: -500px;
+				z-index: 10;
+				border: 1px solid blue;
+			}
+			
+			#divy {
+				position: absolute;
+				top: -500px;
+				left: 200px;
+				z-index: 1;
+				bottom: -500px;
+				z-index: 10;
+				border: 1px solid blue;
+			}
 		</style>
 	</head>
 
 	<body>
-		<div id="cc" style="position: relative;">
+		<div id="cc" style="position: relative;padding: 50px;">
 			<div style="position: absolute;top:0px;left: 0px; box-sizing:border-box;width: 400px;height: 400px;overflow: hidden;position: relative;">
 				<img id="img" src="image/bg1.jpg" onload="ready()" />
 				<div id="div">
 				</div>
+				<div id="divx"></div>
+				<div id="divy"></div>
 			</div>
-			<div style=" position: absolute;top:0px;left: 410px; box-sizing:border-box;width: 400px;height: 400px;overflow: hidden;position: relative;">
+			<div style=" position: absolute;top:0px;left: 410px; box-sizing:border-box;width: 400px;height: 400px;overflow: hidden;">
+				<img id="img3" style="width:100%;height: 100%;" />
+			</div>
+			<div style=" position: absolute;top:410px;left: 410px; box-sizing:border-box;width: 400px;height: 400px;overflow: hidden;">
 				<img id="img2" />
 			</div>
 		</div>
@@ -42,7 +67,9 @@
 		<input id="h" type="text" /><br /> Left:
 		<input id="l" type="text" /><br /> Top:
 		<input id="t" type="text" /><br /> Arc:
-		<input id="a" type="text" /><br />
+		<input id="a" type="text" /><br />X-STEP:
+		<input id="x" type="text" /><br />Y-STEP:
+		<input id="y" type="text" /><br />
 		<button type="button" onclick="btnClick()">CHANGE</button>
 
 	</body>
@@ -53,73 +80,35 @@
 			return document.querySelector(selector);
 		}
 
-		function paint(can, img) {
-			var ctx = can.getContext("2d");
+		function paint(can, img, handler) {
 			var bW = 400; //选择区域的宽度(含阴影边框)
 			var bH = 400; //选择区域的高度(含阴影边框)
 			var bL = 100; //选择区域的左边框（== 右边框）
 			var bT = 100; //选择区域的上边框（== 下边框）
+			var cW = bW - bL * 2; //选择区域的宽度(不含阴影边框)
+			var cH = bH - bT * 2; //选择区域的高度(不含阴影边框)
+			var rx = imgStyle.ow / imgStyle.w,
+				ry = imgStyle.oh / imgStyle.h;
+			imgStyle.rx = rx;
+			imgStyle.ry = ry;
 
-			var sx, sy, sw, sh, rx, ry, realW, realY, dx = 0,cW=bW-bL-bL,cH=bH-bT-bT,
-				dy = 0,
-				dw,
-				dh;
-			rx = imgStyle.ow / imgStyle.w;
-			ry = imgStyle.oh / imgStyle.h;
-			
-			dw =bW-bL-imgStyle.l;
-			dh =bH-bT-imgStyle.t;
-			if(dw>cW)dw =cW;
-			if(dh>cH)dh=cH;
-			sw = Math.round(dw * rx);
-			sh = Math.round(dh * ry);
-			
-			sx = Math.round((bL - imgStyle.l) * rx);
-			sy = Math.round((bT - imgStyle.t) * ry);
-			if(sx<0){
-				dx = imgStyle.l-bL;
-				sx = 0;
-			}
-			if(sy<0){
-				dy = imgStyle.t-bT;
-				sy = 0;
-			}
-			
-			console.log(imgStyle)
-			console.log({ sx: sx, sy: sy, sw: sw, sh: sh, dx: dx, dy: dy, dw: dw, dh: dh, ow: imgStyle.ow, oh: imgStyle.oh, rx: rx, ry: ry });
-			ctx.fillStyle = "yellow";
-			ctx.fillRect(0, 0, 200, 200)
-			if(imgStyle.arc){
-				ctx.save();
-				ctx.translate(100,100);
-				ctx.rotate(imgStyle.arc*Math.PI/180);
-				ctx.translate(-100,-100);
-				ctx.drawImage(img, sx-1000*rx, sy-1000*ry, sw+1000*rx, sh+1000*ry, dx-1000, dy-1000, dw+1000, dh+1000);
-				ctx.restore();
-			}else{
-				ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
-			}
-			console.log({ sx: sx, sy: sy, sw: sw, sh: sh, dx: dx, dy: dy, dw: dw, dh: dh, ow: imgStyle.ow, oh: imgStyle.oh, rx: rx, ry: ry });
-		}
+			var zx =imgStyle.w / 2;
+			var zy =imgStyle.h / 2;
 
-		function rotate(can, img) {
-			var w = imgStyle.ow,h=imgStyle.oh;
-			can.width = w;
-			can.height = h;
+			console.log(imgStyle);
+			can.width = cW;
+			can.height = cH;
 			var ctx = can.getContext("2d");
 			ctx.save();
-			ctx.translate(w / 2, h / 2);
+			ctx.translate(imgStyle.l-bL,imgStyle.t-bT);//==(-bL+imgStyle.l, -bT+imgStyle.t);
+			ctx.translate(zx, zy);
 			ctx.rotate(imgStyle.arc * Math.PI / 180);
-			ctx.drawImage(img, -w/2, -h/2)//, w,h, 0, 0, w, h);
-			ctx.restore();
-//can.width=img.height; 
-//can.height=img.width; 
-//var ctx = can.getContext("2d"); 
-//ctx.save(); 
-//ctx.translate(img.height/2,img.width/2); 
-//ctx.rotate(270*Math.PI/180); 
-//ctx.drawImage(img,-img.width/2,-img.height/2); 
-//ctx.restore();
+			//ctx.translate(-imgStyle.l,-imgStyle.t);
+			ctx.translate(-zx, -zy);
+			ctx.scale(1 / rx, 1 / ry);
+			ctx.drawImage(img, 0, 0, imgStyle.ow, imgStyle.oh, 0, 0, imgStyle.ow, imgStyle.oh);
+			ctx.restore()
+			$("#img2").src = can.toDataURL();
 		}
 
 		function change() {
@@ -133,15 +122,19 @@
 
 			}
 			can = document.createElement("canvas");
-			can.width = 200;
-			can.height = 200;
 			can.style.display = "none";
+			can.id = "can"
 			$("#cc").appendChild(can);
 
-			paint(can, img);
-			//rotate(can,img);
-			img2.src = can.toDataURL();
-
+			paint(can, img)
+			zoom();	
+		}	
+		function zoom(){
+			var x=$("#x").value()||0,y=$("#y").value||0;
+			
+			var xx = Math.cos(imgStyle.arc*Math.PI/180)*x;
+			var yy = Math.cos((90-))			
+			
 		}
 
 		function ready() {
@@ -158,7 +151,7 @@
 			imgStyle.w = parseInt($("#w").value);
 			imgStyle.h = parseInt($("#h").value);
 			imgStyle.arc = parseInt($("#a").value);
-			console.log(imgStyle);
+
 			change();
 		}
 	</script>
