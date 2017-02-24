@@ -113,10 +113,15 @@ function($) {
 		_loadingDiv = $("#g_loading"),
 		_g_css_ref = 1,
 		_g_script_ref = 1,
-		_g_err_msg = {};
-	_g_loadRef = 0;
+		_g_err_msg = {},
+		_g_layer_curr={shade:5000001,ctn:5000002,remove:noop},
+		_g_loadRef = 0;
 
 	util = {
+		
+		    createLayer:function(){
+		    	
+		    }
 
 			// parent is body z-index = 9999999
 			// *弹出错误信息，会自动消失
