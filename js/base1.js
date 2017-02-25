@@ -100,6 +100,7 @@ function($) {
 		head = doc.head || doc.getElementsByTagName(EN_HEAD)[0] || doc.documentElement,
 		baseElement = head.getElementsByTagName(EN_BASE)[0],
 		noop = function() {},
+		body = $("body"),
 		returnFalse = function() {
 			return CK_FALSE
 		},
@@ -114,14 +115,38 @@ function($) {
 		_g_css_ref = 1,
 		_g_script_ref = 1,
 		_g_err_msg = {},
-		_g_layer_curr={shade:5000001,ctn:5000002,remove:noop},
+		_g_layer_curr={index:5000000,remove:noop},
+		layer_remove=function(){
+			this.shade.remove();
+			this.ctn.remove();
+			this.prev.css("display","block");	
+			_g_layer_curr = this.prev;
+		}
 		_g_loadRef = 0;
 
 	util = {
-		
-		    createLayer:function(){
-		    	
-		    }
+			createModalLayer:function(p){
+				var inx = _g_layer_curr.index+2;
+				var ly={index:inx,remove:layer_remove,prev:_g_layer_curr};
+				ly.shade = $("<div class='layer-shade layer-"+inx+"' style='z-index:"+inx+";'></div>").appendTo(body);
+				++inx;
+				ly.ctn =$("<div class='layer-ctn layer-"+inx+"' style='z-index:"+inx+";'></div>").appendTo(body);
+				ly.prev = _g_lay_curr;
+				_g_layer_curr = ly;
+				if(p){
+					if(typeof p ==="string"){
+						ly.ctn.html(p);
+					}else if(typeof p == "function"){
+						p.call(ly.ctn);
+					}else if(p.jquery){
+						ly.ctn.append(p);
+					}
+				}
+				return ly;
+			},
+			closeModalLayer:function(){
+				_g_layer_curr.remove();
+			},
 
 			// parent is body z-index = 9999999
 			// *弹出错误信息，会自动消失
@@ -286,7 +311,7 @@ function($) {
 			put: function(url, data, sh, eh) {
 				util.ajax("put", url, data, sh, eh);
 			},
-			delete: function(url, sh, eh) {
+			del: function(url, sh, eh) {
 				util.ajax("post", url, null, sh, eh);
 			},
 
@@ -1190,15 +1215,19 @@ function($) {
 	$.fn.code = CodePlugin;
 	$.fn.code.Constructor = HtmlCode;
 
-	var _spa_script_ref = 1,
+	var spa_modal_index=0,
 		spa_load_res = function() {
 			var self = this;
 			if(this.resUri) {
-				util.get(self.resUri, null, function(res) {
+				util.get(self.resUri, null, function(data) {
 					/**
-					 * res ={id_key:{uri:"",css:"",script:""},id_key2:{uri:"",css:"",script:""},...........}
+					 * res =[{id:"",uri:"",css:"",script:""},{id:"",uri:"",css:"",script:""},...........]
 					 */
-					self.res = data;
+					self.res={};
+					for(var i=0 ;i < data.lenth;++i){
+						var item = data[i];
+						self.res[item.id]=item;
+					}
 					if(self.menuUri) {
 						self.loadMenu();
 					} else {
@@ -1235,7 +1264,7 @@ function($) {
 				item = items[i];
 				var $li = $("<li></li>");
 				var $a = ("<a href='javascript:;'></a>").appendTo($li);
-				caption = item.caption；
+				caption = item.caption;
 				iconClass = item.icon || (item.res ? "book" : "brance");
 				$a.html("<i class='icon-" + iconClass + "'></i>" + caption);
 				if(item.res) {
@@ -1251,110 +1280,109 @@ function($) {
 				$li.appendTo(pEle);
 			}
 		},
-
-		SPA = function(ele) {
-			this.ele = ele;
-			ele.data(DK_FORM_VALUE, this);
-			this.menuEle = ele.find(".spa-menu");
-			this.mainEle = ele.find(".spa-main");
-			this.modelEle = ele.find(".spa-model");
-			this.menuUri = ele.attr("menu");
-			this.resUri = ele.attr("resource");
-			this.loadResource = spa_load_res;
-			this.loadMenu = spa_load_menu;
-			this.buildMenu = spa_build_menu;
-		};
-
-	$.extend(SPA.prototype, {
-		init: function() {
-			this.menuEle.empty();
-			this.cleanModel();
-			this.cleanMain();
-			this.loadResource();
-		},
-		cleanModel: function() {
-
-		},
-		cleanMain: function() {
-			if(this.main) {
-				if(this.main.link) {
-					head.removeChild(this.main.link);
+		spa_loadModelCss=function(model){
+			if(model.css){
+				var found = false;
+				$("link").each(function(){
+					if(model.css == this.getAttribute("href")){
+						var ref = parseInt(this.getAttribute("spa-css-ref")||"1");
+						this.setAttribute("spa-css-ref",""+(ref+1));
+						found = true;
+						return false;
+				    }
+				});
+				if(!found){
+					var link =  doc.createElement('link');
+					link.rel = 'stylesheet';
+					link.href = model.css;
+					link.media = 'all';
+					link.setAttibute("spa-css-ref","1");
+					head.appendChild(link);
 				}
-				if(this.main.destroy){
-					this.main.destroy.call(this.main);
-				}
-				this.main = null;
-				this.mainEle.empty();
+			}
+		},		
+		spa_showMainInternal=function(model){
+			spa_cleanMain.call(this);
+			this.main = model;
+			if(model.css) sap_loadModelCss.call(this,model);
+			if(model.html)this.mainEle.html(model.html);
+			if(model.factory && model.factory.main){
+				model.factory.main.call(this);
+			}
+		},		
+		spa_showModalInternal=function(model,data){
+			if(model.css) spa_loadModelCss.call(this,model);
+			var ly = util.createModalLayer(model.html);
+			++spa_modal_index;
+			ly.ctn.addClass("spa-modal").addClass("spa-modal-index-"+spa_modal_index).attr("spa-model-id",model.id);			
+			if(model.factory && model.factory.modal){
+				model.factory.modal.call(this,data);
 			}
 		},
-		showMain: function(id) {
-			if(!id) {
-				id = location.hash;
-				if(id && id.length > 1) {
-					id = id.substring(1);
-				} else return;
-			}
-			if(this.main && id == this.main.id) return;
-			this.cleanModel();
-			this.cleanMain();
-			var mainObj = this.res[id];
-			if(mainObj) {
-				this.main = $.extend({}, mainObj);
-				this.main.id = id;
-				this.main.state = 0;
-				this.loadMain();
-			} else {
-				util.error("invalid resource id[" + id + "]");
+		sap_cacheModel=function(model){
+			if(this.cache){
+				var m= this.cache[id]={};
+				m.html = model.html;
+				m.factory = model.factory;
+				m.css = m.css;
+				m.id = model;
+				delete this.res[id];
 			}
 		},
-		loadMain: function() {
-			var model = this.main,
-				self = this;
-			if(model.uri) {
+		spa_afterLoadByMain=function(model,data){
+			spa_cacheModel.call(this,model);
+			spa_showMainInternal.call(this,model,data);
+		},
+		spa_afterLoadByModal=function(model,data){
+			spa_cacheModel.call(this,model);
+			spa_showModalInternal.call(this,model,data);			
+		},
+		spa_loadModel=function(model,handler,data){
+			if(model.html){
+				model.state = 11;
+				spa_loadModelScript.call(this,model,handler,data);
+			}elseif(model.uri){
 				util.showLoading();
 				model.state = 10;
-				$.ajax({ url: model.uri, dataType: "html", type: "GET" }).done(function(data) {
+				$.ajax({ url: model.uri, dataType: "html", type: "GET" }).done(function(hc) {
 					model.state = 11;
-					model.html = data;
+					model.html = hc;
 					util.hideLoading();
-					self.loadMainCss();
-					self.loadMainScript();
+					spa_loadModelScript.call(self,model,handler,data);
 				}).fail(function() {
 					model.state = 12;
 					util.hideLoading();
-					util.error("load resource[" + model.id + "] error");
+					util.error("load resource[" + model.id + "] html error");
 				});
-			} else {
-				self.loadMainCss();
-				self.loadMainScript();
-			}
+			}	
 		},
-		loadMainCss: function() {
-			if(this.main.css) {
-				var link = this.main.link = doc.createElement('link');
-				link.rel = 'stylesheet';
-				link.href = this.main.css;
-				link.media = 'all';
-				head.appendChild(link);
+		spa_removeModelCss=function(model){
+			if(model.css){
+				$("link").each(function(){
+					if(model.css == this.getAttribute("href")){
+						var ref = parseInt(this.getAttribute("spa-css-ref")||"1");
+						if(ref == 1){
+							this.paretNode.removeChild(this);
+						}else{
+							this.setAttribute("spa-css-ref",""+(ref-1));
+						}
+				    }
+				});
 			}
-		},
-		loadMainScript: function() {
-			var model = this.main,
-				self = this;
+		},		
+		spa_loadModelScript=function(model,handler,data) {
+			var self = this;
 			var node = model.scriptNode = doc.createElement(EN_SCRIPT);
 			node.async = CK_TRUE;
 			node.src = model.script;
 			node.charset = "UTF-8";
 			var supportOnload = "onload" in node;
 			util.showLoading();
-			$.defineMain = function(handler) {
+			window.spa_define = function(factoryBuilder) {
 				model.state = 30;
 				util.showLoading();
 				try {
-					handler.call(window, self, model, model.mainEle);
-					if(main.html)
-						self.mainEle.html(model.html);
-					if(model.init) model.init.call(model);
+					model.factory =  factoryBuilder.call(null,self);
 					head.removeChild(node);
 					model.state = 31;
 					util.hideLoading();
@@ -1362,8 +1390,9 @@ function($) {
 					model.state = 32;
 					head.removeChild(node);
 					util.hideLoading();
-					util.error("init main error");
+					util.error("init model["+model.id+"] error");
 				}
+				if(model.factory)handler.call(self,model,data);
 			}
 
 			if(supportOnload) {
@@ -1374,10 +1403,12 @@ function($) {
 					util.hideLoading();
 				};
 				node.onerror = function() {
-					model.state = 22;
-					util.error("load script error:" + model.script);
-					node.onload = null;
-					node.onerror = null;
+					if(model.state<22){
+						model.state = 22;
+						util.error("load script error:" + model.script);
+						node.onload = null;
+						node.onerror = null;
+					}
 					util.hideLoading();
 				};
 			} else {
@@ -1404,7 +1435,94 @@ function($) {
 			baseElement ?
 				head.insertBefore(node, baseElement) :
 				head.appendChild(node);
+		},		
+		spa_cleanMain=function() {
+			if(this.main) {
+				spa_removeModelCss.call(this,this.main);
+				if(this.main.factory.mainDestory)this.main.factory.mainDestory.call(this);
+				this.mainEle.empty();
+			}
 		},
+
+		SPA = function(ele) {
+			this.ele = ele;
+			ele.data(DK_FORM_VALUE, this);
+			if(ele.attr("cache")){
+				this.cache={};
+			}
+			this.menuEle = ele.find(".spa-menu");
+			this.mainEle = ele.find(".spa-main");
+			this.menuUri = ele.attr("menu");
+			this.resUri = ele.attr("resource");
+			this.loadResource = spa_load_res;
+			this.loadMenu = spa_load_menu;
+			this.buildMenu = spa_build_menu;
+			this.dataStatck=[];
+
+		};
+
+	$.extend(SPA.prototype, {
+		init: function() {
+			this.menuEle.empty();
+			this.cleanModel();
+			this.cleanMain();
+			this.loadResource();
+		},
+
+		showModal:function(id,data){
+			if(this.cache && this.cache[id]){
+				spa_showModalInternal.call(this,this.cache[id],data);
+			}else{
+				var model = this.res[id];
+				if(model){
+					spa_loadModel.call(this,model,spa_afterLoadByModal,data);
+				}else{
+					util.error("invalid resource id[" + id + "]");
+				}
+			}
+		},
+		showMain: function(id,data) {
+			if(!id) {
+				id = location.hash;
+				if(id && id.length > 1) {
+					id = id.substring(1);
+				} else return;
+			}
+			if(this.main && id == this.main.id) return;
+			spa_cleanModel.call();
+			spa_cleanMain.call();
+			if(this.cache && this.cache[id]){
+				spa_showMainInternal.call(this,this.cache[id],data);
+			}else{
+				var model = this.res[id];
+				if(model){
+					spa_loadModel.call(this,model,this.afterLoadByMain,data);
+				}else{
+					util.error("invalid resource id[" + id + "]");
+				}
+			}
+		},
+		getLastModalIndex:function(){
+			return sap_modal_index;
+		},
+		getLastModalCtn:function(){
+			return $("sap-modal-index-"+spa_modal_index);
+		},
+		closeModal:function(){
+			var ctn=$("sap-modal-index-"+spa_modal_index);
+			var id = modalCtn.attr("spa-model-id");
+			var inx = _g_layer_curr.index+1;
+			if(ctn.hasCalss("layer-"+inx)){
+				var model = this.cache?this.cache[id]:this.res[id];
+				if(model){
+					if(model.factory.modalDestory)model.factory.modalDestory.call(this);
+					if(model.css)spa_removeModelCss.call(this,model);
+					util.closeModalLayer();
+				}
+			}else{
+				util.error("can't close modal:has top layer ");
+			}
+		}
 	});
 
 	$(doc).on("click.jr_dropdown_api", dd_clearMenus);

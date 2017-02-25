@@ -1830,6 +1830,24 @@ font-size: 100px;}
     clear: both;
 }
 
+.layer-shade{
+	background-color: #000;
+	opacity:.3;
+	filter:alpha(opacity=30);
+	position:absolute;
+	left:0;
+	top:0;
+	width:100%;
+	height:100%;
+}
+.layer-ctn{
+	position:absolute;
+	left:0;
+	top:0;
+	width:100%;
+	height:100%;
+}
+
 .dd-ctn {
     overflow: visible;
 }
