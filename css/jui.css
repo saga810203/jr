@@ -102,8 +102,8 @@ pre {
 
 @font-face {
     font-family: 'jIcon';
-    src: url('/jr/font/iconfont.eot');
-    src: url('/jr/font/iconfont.eot?#iefix') format('embedded-opentype'), url('/jr/font/iconfont.woff') format('woff'), url('/jr/font/iconfont.ttf') format('truetype'), url('/jr/font/iconfont.svg#iconfont') format('svg');
+    src: url('../font/iconfont.eot');
+    src: url('../font/iconfont.eot?#iefix') format('embedded-opentype'), url('../font/iconfont.woff') format('woff'), url('../font/iconfont.ttf') format('truetype'), url('../font/iconfont.svg#iconfont') format('svg');
 }
 
 .icon, [class*=" icon-"], [class^="icon-"] {

@@ -82,21 +82,20 @@ function($) {
 		CK_MM = "MM",
 		CK_YYYYMM = "YYYYMM",
 
-		DK_FORM_VALUE = "form_value";
+		DK_FORM_VALUE = "form_value",
 
 	/**
 	 * TK = template key
 	 */
-	var TK_TEXT_INPUT = "<input type='text' />",
+	    TK_TEXT_INPUT = "<input type='text' />",
 		TK_SPAN = "<span></span>",
 		TK_UL = "<ul></ul>",
 		TK_LI = "<li></li>",
 		TK_ICON = "<i class='icon'></i>",
 		TK_DD_DROP = "<div class='dd-drop'></div>",
 		TK_DD_HAND = "<a class='dd-hand' href='javascript:void(0)'><span></span><i class='icon'></i></a>",
-		TK_HIDDEN_INPUT = "<input type='hidden' />";
-
-	var doc = document,
+		TK_HIDDEN_INPUT = "<input type='hidden' />",
+	    doc = document,
 		head = doc.head || doc.getElementsByTagName(EN_HEAD)[0] || doc.documentElement,
 		baseElement = head.getElementsByTagName(EN_BASE)[0],
 		noop = function() {},
@@ -286,7 +285,6 @@ function($) {
 									util.error("load resource error:" + pUrl + "\n" + (rd.detailMsg ? rd.detailMsg : ""));
 								}
 							} else {
-
 								var msg = eh["" + rd.code] || _g_err_msg["" + rd.code];
 								if(msg) {
 									if($.type(msg) == TN_FNC) {
@@ -342,9 +340,9 @@ function($) {
 			var $ddc = $this.parents(QF_DROP_DOWN_CONTAINER);
 			if(!$ddc.length) return;
 			if($ddc.is(QF_DISABLED)) return;
-			if($ddc.hasClass(CC_FORM_ITEM) && ($ddc.hasClass(CC_READONLY) || $ddc.hasClass(CC_SHOWONLY))) return;
 			var isActive = $ddc.hasClass(CC_OPEN);
 			dd_clearMenus();
+			if($ddc.hasClass(CC_FORM_ITEM) && ($ddc.hasClass(CC_READONLY) || $ddc.hasClass(CC_SHOWONLY))) return;
 			if(!isActive) {
 				var relatedTarget = {
 					relatedTarget: this
@@ -363,7 +361,7 @@ function($) {
 		dict_dictHandleCache = {},
 		dict_dictGuid = 1,
 		dict_handerArray = "handlers",
-		dict_baseUri = "/jr/js/ddict/",
+		dict_baseUri = "/js/ddict/",
 		dict_load = function(dictCode) {
 			util.showLoading();
 			$.ajax({ url: dict_baseUri + dictCode + ".json", type: "get", dataType: "json" }).done(function(data) {
@@ -481,6 +479,7 @@ function($) {
 			this.readOnly = ele.hasClass(CC_READONLY);
 			this.showOnly = ele.hasClass(CC_SHOWONLY);
 			this.dictCode = ele.attr(AK_DICT_CODE);
+			this.showInvalidItem = ele.attr("show-invalid-item");
 			this.ele = ele;
 			this.dv = ele.attr(AK_DEF_VAL) || "";
 			this.isBool = ele.hasClass(CC_BOOL);
@@ -507,6 +506,7 @@ function($) {
 			this.readOnly = ele.hasClass(CC_READONLY);
 			this.showOnly = ele.hasClass(CC_SHOWONLY);
 			this.dictCode = ele.attr(AK_DICT_CODE);
+			this.showInvalidItem = ele.attr("show-invalid-item");
 			this.ele = ele;
 			this.dv = [];
 			var defV = ele.attr(AK_DEF_VAL);
@@ -559,7 +559,7 @@ function($) {
 			var $ul = $(TK_UL);
 			for(var i = 0; i < dict.length; ++i) {
 				var item = dict[i];
-				if(item.enabled) {
+				if(item.enabled || this.showInvalidItem) {
 					var $li = $("<li class='select-item'></li>");
 					$li.attr(AK_CODE, item.code);
 					$li.text(item.caption);
@@ -572,7 +572,7 @@ function($) {
 			var $ul = $(TK_UL);
 			for(var i = 0; i < dict.length; ++i) {
 				var item = dict[i];
-				if(item.enabled) {
+				if(item.enabled || this.showInvalidItem) {
 					var $li = $(TK_LI);
 					if(item.children && item.children.length) {
 						var $ti = $("<a href='javascript:void(0)'><i class='icon'></a>");
@@ -816,6 +816,7 @@ function($) {
 	});
 	$.extend(Jselect.prototype, {
 		render: function() {
+			var that = this;
 			this.ele.empty();
 			if(!this.ele.hasClass(CC_DROP_DOWN_CONTAINER)) this.ele.addClass(CC_DROP_DOWN_CONTAINER);
 			this.codeEle = $(TK_HIDDEN_INPUT).appendTo(this.ele);
@@ -825,16 +826,15 @@ function($) {
 			if((!this.readOnly) && (!this.showOnly)) {
 				this.selectItemEle = $(TK_DD_DROP).append($("<div class='select-loading'></div>"));
 				this.selectItemEle.appendTo(this.ele);
-				dict_apply(this.dictCode, (function(that) {
-					return function(dd) {
+				dict_apply(this.dictCode,  function(dd) {
 						that.selectItemEle.empty();
 						if(that.dropItem) {
 							that.dropItem.call(that, dd);
 						} else {
 							that.selectItemEle.append((that.isTree ? select_buildTreeDrop : select_buildListDrop).call(that, dd));
 						}
-					}
-				})(this));
+					
+				});
 			}
 		},
 		val: function(val) {
@@ -1013,10 +1013,7 @@ function($) {
 				return ret;
 			}
 			for(var key in data) {
-				var obj = this.items[key];
-				if(obj) {
-					obj.val(data[key]);
-				}
+				(this.items[key]||(this.items[key] = new Jhidden(key))).val(data[key]);
 			}
 			return this;
 		},
@@ -1032,6 +1029,9 @@ function($) {
 				qs.substr(0, qs.length - 1);
 			}
 			return qs;
+		},
+		get:function(){
+			
 		}
 	});
 
@@ -1054,7 +1054,7 @@ function($) {
 					++g_codeRef;
 					hds[cf] = parseCodeTemplate($this, hds);
 					var ccode = "{{" + key + "-" + cf + "}}";
-					if($this.attr("tag-hlod")) {
+					if($this.attr("tag-hlod")) {						
 						$this.html(ccode);
 					} else {
 						//doc.createTextNode("{{"+key+"-"+cf+"}}");
@@ -1229,7 +1229,7 @@ function($) {
 						self.res[item.id]=item;
 					}
 					if(self.menuUri) {
-						self.loadMenu();
+						spa_load_menu.call(self);
 					} else {
 						self.showMain();
 					}
@@ -1242,7 +1242,7 @@ function($) {
 			var self = this;
 			util.get(this.menuUri, null, function(menu) {
 				self.menu = menu;
-				self.buildMenu();
+				spa_buildMenu.call(self);
 				self.showMain();
 			}, function(errCode, errMsg, errDetailMsg) {
 				util.error("load spa menu data error");
@@ -1273,9 +1273,9 @@ function($) {
 						$a.addClass("spa-model");
 					}
 				} else {
-					var main $a.append($("<i class='icon-fold'></i>"));
+					$a.append($("<i class='icon-fold'></i>"));
 					var $ul = $("<ul></ul>").appendTo($li);
-					spa_build_menu_item(that.$ul, item.children);
+					spa_build_menu_item(that,$ul, item.children);
 				}
 				$li.appendTo(pEle);
 			}
@@ -1341,7 +1341,7 @@ function($) {
 			if(model.html){
 				model.state = 11;
 				spa_loadModelScript.call(this,model,handler,data);
-			}elseif(model.uri){
+			}else if(model.uri){
 				util.showLoading();
 				model.state = 10;
 				$.ajax({ url: model.uri, dataType: "html", type: "GET" }).done(function(hc) {
@@ -1454,21 +1454,12 @@ function($) {
 			this.mainEle = ele.find(".spa-main");
 			this.menuUri = ele.attr("menu");
 			this.resUri = ele.attr("resource");
-			this.loadResource = spa_load_res;
-			this.loadMenu = spa_load_menu;
-			this.buildMenu = spa_build_menu;
-			this.dataStatck=[];
-
 		};
 
 	$.extend(SPA.prototype, {
 		init: function() {
-			this.menuEle.empty();
-			this.cleanModel();
-			this.cleanMain();
-			this.loadResource();
+			spa_load_resouce.call(this);
 		},
-
 		showModal:function(id,data){
 			if(this.cache && this.cache[id]){
 				spa_showModalInternal.call(this,this.cache[id],data);
@@ -1481,7 +1472,7 @@ function($) {
 				}
 			}
 		},
-		showMain: function(id,data) {
+		showMain: function(id) {
 			if(!id) {
 				id = location.hash;
 				if(id && id.length > 1) {
@@ -1492,11 +1483,11 @@ function($) {
 			spa_cleanModel.call();
 			spa_cleanMain.call();
 			if(this.cache && this.cache[id]){
-				spa_showMainInternal.call(this,this.cache[id],data);
+				spa_showMainInternal.call(this,this.cache[id]);
 			}else{
 				var model = this.res[id];
 				if(model){
-					spa_loadModel.call(this,model,this.afterLoadByMain,data);
+					spa_loadModel.call(this,model,this.afterLoadByMain);
 				}else{
 					util.error("invalid resource id[" + id + "]");
 				}
