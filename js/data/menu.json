@@ -1,0 +1,122 @@
+{
+	"success": true,
+	"data": [
+		{
+			"icon": "",
+			"res": "main1",
+			"caption": "1111111"
+		}, {
+			"icon": "",
+			"caption": "22222222222",
+			"children": [
+				{
+					"icon": "",
+					"caption": "211111111",
+					"children": [
+						{
+							"icon": "",
+							"res": "main1",
+							"caption": "2100000000"
+						}, {
+							"icon": "",
+							"res": "main1",
+							"caption": "213333333"
+						}, {
+							"icon": "",
+							"res": "main1",
+							"caption": "215555555555"
+						}, {
+							"icon": "",
+							"res": "main1",
+							"caption": "216666666666666"
+						}, {
+							"icon": "",
+							"res": "main1",
+							"caption": "21777777777777"
+						}, {
+							"icon": "",
+							"res": "main1",
+							"caption": "218888888888"
+						}
+					]
+				}, {
+					"icon": "",
+					"res": "main1",
+					"caption": "211111111"
+				}, {
+					"icon": "",
+					"res": "main1",
+					"caption": "211111111"
+				}, {
+					"icon": "",
+					"res": "main1",
+					"caption": "211111111"
+				}, {
+					"icon": "",
+					"res": "main1",
+					"caption": "211111111"
+				}
+			]
+		}, {
+			"icon": "",
+			"res": "main1",
+			"caption": "33333333333"
+		}, {
+			"icon": "",
+			"res": "main1",
+			"caption": "44444444444"
+		}, {
+			"icon": "",
+			"res": "main1",
+			"caption": "5555555555"
+		}, {
+			"icon": "",
+			"res": "main1",
+			"caption": "6666666666666"
+		}, {
+			"icon": "",
+			"res": "main1",
+			"caption": "777777777777"
+		}, {
+			"icon": "",
+			"caption": "8888888888",
+			"children": [
+				{
+					"icon": "",
+					"res": "main1",
+					"caption": "2100000000"
+				}, {
+					"icon": "",
+					"res": "main1",
+					"caption": "213333333"
+				}, {
+					"icon": "",
+					"res": "main1",
+					"caption": "215555555555"
+				}, {
+					"icon": "",
+					"res": "main1",
+					"caption": "216666666666666"
+				}, {
+					"icon": "",
+					"res": "main1",
+					"caption": "21777777777777"
+				}, {
+					"icon": "",
+					"caption": "218888888888",
+					"children": [
+						{
+							"icon": "",
+							"res": "main1",
+							"caption": "216666666666666"
+						}, {
+							"icon": "",
+							"res": "main1",
+							"caption": "21777777777777"
+						}
+					]
+				}
+			]
+		}
+	]
+}

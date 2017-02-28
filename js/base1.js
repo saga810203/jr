@@ -43,17 +43,17 @@ function($) {
 		QF_OPEN = ".open",
 		CC_OPEN = "open",
 		CC_DISABLED = "disabled",
-		QF_DISABLED = ".disabled :disabled";
+		QF_DISABLED = ".disabled :disabled",
 
-	/*
-	 * AK = attribate key
-	 * DK = data key
-	 * EN = element name
-	 * TN = type name
-	 * CK = const data key  
-	 * 
-	 */
-	var
+		/*
+		 * AK = attribate key
+		 * DK = data key
+		 * EN = element name
+		 * TN = type name
+		 * CK = const data key  
+		 * 
+		 */
+
 		AK_DEF_VAL = "defVal",
 		AK_PLACEHOLDER = "placeholder",
 		AK_ID = "id",
@@ -84,10 +84,10 @@ function($) {
 
 		DK_FORM_VALUE = "form_value",
 
-	/**
-	 * TK = template key
-	 */
-	    TK_TEXT_INPUT = "<input type='text' />",
+		/**
+		 * TK = template key
+		 */
+		TK_TEXT_INPUT = "<input type='text' />",
 		TK_SPAN = "<span></span>",
 		TK_UL = "<ul></ul>",
 		TK_LI = "<li></li>",
@@ -95,7 +95,7 @@ function($) {
 		TK_DD_DROP = "<div class='dd-drop'></div>",
 		TK_DD_HAND = "<a class='dd-hand' href='javascript:void(0)'><span></span><i class='icon'></i></a>",
 		TK_HIDDEN_INPUT = "<input type='hidden' />",
-	    doc = document,
+		doc = document,
 		head = doc.head || doc.getElementsByTagName(EN_HEAD)[0] || doc.documentElement,
 		baseElement = head.getElementsByTagName(EN_BASE)[0],
 		noop = function() {},
@@ -114,36 +114,36 @@ function($) {
 		_g_css_ref = 1,
 		_g_script_ref = 1,
 		_g_err_msg = {},
-		_g_layer_curr={index:5000000,remove:noop},
-		layer_remove=function(){
+		_g_layer_curr = { index: 5000000, remove: noop },
+		layer_remove = function() {
 			this.shade.remove();
 			this.ctn.remove();
-			this.prev.css("display","block");	
+			this.prev.css("display", "block");
 			_g_layer_curr = this.prev;
-		}
-		_g_loadRef = 0;
+		},
+		_g_loadRef = 0,
 
-	util = {
-			createModalLayer:function(p){
-				var inx = _g_layer_curr.index+2;
-				var ly={index:inx,remove:layer_remove,prev:_g_layer_curr};
-				ly.shade = $("<div class='layer-shade layer-"+inx+"' style='z-index:"+inx+";'></div>").appendTo(body);
+		util = {
+			createModalLayer: function(p) {
+				var inx = _g_layer_curr.index + 2;
+				var ly = { index: inx, remove: layer_remove, prev: _g_layer_curr };
+				ly.shade = $("<div class='layer-shade layer-" + inx + "' style='z-index:" + inx + ";'></div>").appendTo(body);
 				++inx;
-				ly.ctn =$("<div class='layer-ctn layer-"+inx+"' style='z-index:"+inx+";'></div>").appendTo(body);
+				ly.ctn = $("<div class='layer-ctn layer-" + inx + "' style='z-index:" + inx + ";'></div>").appendTo(body);
 				ly.prev = _g_lay_curr;
 				_g_layer_curr = ly;
-				if(p){
-					if(typeof p ==="string"){
+				if(p) {
+					if(typeof p === "string") {
 						ly.ctn.html(p);
-					}else if(typeof p == "function"){
+					} else if(typeof p == "function") {
 						p.call(ly.ctn);
-					}else if(p.jquery){
+					} else if(p.jquery) {
 						ly.ctn.append(p);
 					}
 				}
 				return ly;
 			},
-			closeModalLayer:function(){
+			closeModalLayer: function() {
 				_g_layer_curr.remove();
 			},
 
@@ -361,7 +361,7 @@ function($) {
 		dict_dictHandleCache = {},
 		dict_dictGuid = 1,
 		dict_handerArray = "handlers",
-		dict_baseUri = "/js/ddict/",
+		dict_baseUri = "/jr/js/ddict/",
 		dict_load = function(dictCode) {
 			util.showLoading();
 			$.ajax({ url: dict_baseUri + dictCode + ".json", type: "get", dataType: "json" }).done(function(data) {
@@ -520,6 +520,9 @@ function($) {
 			this.isTree = ele.hasClass(CC_TREE);
 			ele.data(DK_FORM_VALUE, this);
 		},
+		mselect_remove = function(e) {
+			$(this).parent().remove();
+		},
 		mselect_add = function(mselect, code, init_add) {
 			var found = false;
 			if(!init_add) {
@@ -533,6 +536,9 @@ function($) {
 			if(!found) {
 				var $li = $("<li><div>x</div></li>");
 				$li.addClass(CC_SELECT_CAPTION).append($(TK_HIDDEN_INPUT).val(code)).appendTo(mselect.captionEle);
+				if((!mselect.readOnly) && (!mselect.showOnly)) {
+					$li.children('div').on("click.jr_mselect_remove_api", mselect_remove);
+				}
 				dict_apply(mselect.dictCode, function(dict) {
 					var cp = dict_get(dict, code);
 					if(cp) {
@@ -566,6 +572,7 @@ function($) {
 					$li.appendTo($ul);
 				}
 			}
+			$ul.find(QF_SELECT_ITEM).on("click.jr_select_api", select_selectItem);
 			return $ul;
 		},
 		select_buildTreeDrop = function(dict) {
@@ -584,6 +591,8 @@ function($) {
 					$li.appendTo($ul);
 				}
 			}
+			$ul.find(QF_SELECT_ITEM).on("click.jr_select_api", select_selectItem);
+			$ul.find(QF_BRANCH_ITEM).on("click.jr_select_api", select_branchItem);
 			return $ul;
 		},
 		select_selectItem = function(e) {
@@ -596,7 +605,7 @@ function($) {
 				}
 			}
 		},
-		select_branceItem = function(evt) {
+		select_branchItem = function(evt) {
 			$(this).toggleClass(CC_OPEN);
 			evt.stopPropagation();
 		},
@@ -739,7 +748,6 @@ function($) {
 				return ret;
 			}
 		},
-
 		_version = "1.1";
 
 	Jhidden.build = function(ele) {
@@ -771,7 +779,7 @@ function($) {
 		reset: function() {
 			return this.value = this.dv;
 		},
-		render: function() {},
+		render: noop,
 		validate: function() {
 			return CK_TRUE
 		},
@@ -826,14 +834,13 @@ function($) {
 			if((!this.readOnly) && (!this.showOnly)) {
 				this.selectItemEle = $(TK_DD_DROP).append($("<div class='select-loading'></div>"));
 				this.selectItemEle.appendTo(this.ele);
-				dict_apply(this.dictCode,  function(dd) {
-						that.selectItemEle.empty();
-						if(that.dropItem) {
-							that.dropItem.call(that, dd);
-						} else {
-							that.selectItemEle.append((that.isTree ? select_buildTreeDrop : select_buildListDrop).call(that, dd));
-						}
-					
+				dict_apply(this.dictCode, function(dd) {
+					that.selectItemEle.empty();
+					if(that.dropItem) {
+						that.dropItem.call(that, dd);
+					} else {
+						that.selectItemEle.append((that.isTree ? select_buildTreeDrop : select_buildListDrop).call(that, dd));
+					}
 				});
 			}
 		},
@@ -911,6 +918,7 @@ function($) {
 			this.valEle = $(TK_HIDDEN_INPUT);
 			this.captionEle = $(TK_SPAN).appendTo($(TK_DD_HAND).append(this.valEle).appendTo(this.ele));
 			date_change(this, this.dv);
+
 		},
 		val: function(val) {
 			if(arguments.length) {
@@ -1013,7 +1021,7 @@ function($) {
 				return ret;
 			}
 			for(var key in data) {
-				(this.items[key]||(this.items[key] = new Jhidden(key))).val(data[key]);
+				(this.items[key] || (this.items[key] = new Jhidden(key))).val(data[key]);
 			}
 			return this;
 		},
@@ -1030,8 +1038,8 @@ function($) {
 			}
 			return qs;
 		},
-		get:function(){
-			
+		get: function() {
+
 		}
 	});
 
@@ -1054,7 +1062,7 @@ function($) {
 					++g_codeRef;
 					hds[cf] = parseCodeTemplate($this, hds);
 					var ccode = "{{" + key + "-" + cf + "}}";
-					if($this.attr("tag-hlod")) {						
+					if($this.attr("tag-hlod")) {
 						$this.html(ccode);
 					} else {
 						//doc.createTextNode("{{"+key+"-"+cf+"}}");
@@ -1215,7 +1223,7 @@ function($) {
 	$.fn.code = CodePlugin;
 	$.fn.code.Constructor = HtmlCode;
 
-	var spa_modal_index=0,
+	var spa_modal_index = 0,
 		spa_load_res = function() {
 			var self = this;
 			if(this.resUri) {
@@ -1223,10 +1231,10 @@ function($) {
 					/**
 					 * res =[{id:"",uri:"",css:"",script:""},{id:"",uri:"",css:"",script:""},...........]
 					 */
-					self.res={};
-					for(var i=0 ;i < data.lenth;++i){
+					self.res = {};
+					for(var i = 0; i < data.length; ++i) {
 						var item = data[i];
-						self.res[item.id]=item;
+						self.res[item.id] = item;
 					}
 					if(self.menuUri) {
 						spa_load_menu.call(self);
@@ -1242,20 +1250,30 @@ function($) {
 			var self = this;
 			util.get(this.menuUri, null, function(menu) {
 				self.menu = menu;
-				spa_buildMenu.call(self);
+				spa_build_menu.call(self);
 				self.showMain();
 			}, function(errCode, errMsg, errDetailMsg) {
 				util.error("load spa menu data error");
 			});
 		},
 		spa_build_menu = function() {
-			if(this.menuEle && that.menu) {
-				var ele = that.menuEle;
-				var pEle = $("<ul class='spa-menu-root'></ul>");
-				for(var i = 0; i < that.menu.length; ++i) {
-					spa_build_menu_item(this, pEle, that.menu[i]);
-				}
+			if(this.menuEle && this.menu) {
+				var pEle = $("<ul class='nav nav-root'></ul>");
+				spa_build_menu_item(this, pEle, this.menu);
 				pEle.appendTo(this.menuEle);
+				var self = this;
+				this.menuEle.find(".nav-hand").on("click", function(e) {
+					var $this = $(this);
+					if($this.hasClass("spa-modal")) {
+						self.showModal($this.attr("res"));
+					} else {
+						location.hash = "#" + $this.attr("res");
+						self.showMain();
+					}
+				});
+				this.menuEle.find(".nav-branch-hand").on("click", function(e) {
+					$(this).parent().toggleClass("open");
+				});
 			}
 		},
 		spa_build_menu_item = function(that, pEle, items) {
@@ -1263,116 +1281,127 @@ function($) {
 			for(var i = 0; i < items.length; ++i) {
 				item = items[i];
 				var $li = $("<li></li>");
-				var $a = ("<a href='javascript:;'></a>").appendTo($li);
+				var $a = $("<a href='javascript:;'></a>").appendTo($li);
 				caption = item.caption;
-				iconClass = item.icon || (item.res ? "book" : "brance");
+				iconClass = item.icon || (item.res ? "book" : "branch");
 				$a.html("<i class='icon-" + iconClass + "'></i>" + caption);
 				if(item.res) {
-					$a.attr("res", item.res);
-					if(item.model) {
-						$a.addClass("spa-model");
+					$a.attr("res", item.res).addClass("nav-hand");
+					if(item.modal) {
+						$a.addClass("spa-modal");
 					}
 				} else {
-					$a.append($("<i class='icon-fold'></i>"));
-					var $ul = $("<ul></ul>").appendTo($li);
-					spa_build_menu_item(that,$ul, item.children);
+					$a.append($("<i class='icon fold'></i>")).addClass("nav-branch-hand");
+					$li.addClass("nav-parent");
+					var $ul = $("<ul class='nav'></ul>").appendTo($li);
+					spa_build_menu_item(that, $ul, item.children);
 				}
 				$li.appendTo(pEle);
 			}
 		},
-		spa_loadModelCss=function(model){
-			if(model.css){
+		spa_loadModelCss = function(model) {
+			if(model.css) {
 				var found = false;
-				$("link").each(function(){
-					if(model.css == this.getAttribute("href")){
-						var ref = parseInt(this.getAttribute("spa-css-ref")||"1");
-						this.setAttribute("spa-css-ref",""+(ref+1));
+				$("link").each(function() {
+					if(model.css == this.getAttribute("href")) {
+						var ref = parseInt(this.getAttribute("spa-css-ref") || "1");
+						this.setAttribute("spa-css-ref", "" + (ref + 1));
 						found = true;
 						return false;
-				    }
+					}
 				});
-				if(!found){
-					var link =  doc.createElement('link');
+				if(!found) {
+					var link = doc.createElement('link');
 					link.rel = 'stylesheet';
 					link.href = model.css;
 					link.media = 'all';
-					link.setAttibute("spa-css-ref","1");
+					link.setAttibute("spa-css-ref", "1");
 					head.appendChild(link);
 				}
 			}
-		},		
-		spa_showMainInternal=function(model){
+		},
+		spa_showMainInternal = function(model) {
 			spa_cleanMain.call(this);
 			this.main = model;
-			if(model.css) sap_loadModelCss.call(this,model);
-			if(model.html)this.mainEle.html(model.html);
-			if(model.factory && model.factory.main){
+			if(model.css) sap_loadModelCss.call(this, model);
+			if(model.html) this.mainEle.html(model.html);
+			if(model.factory && model.factory.main) {
 				model.factory.main.call(this);
 			}
-		},		
-		spa_showModalInternal=function(model,data){
-			if(model.css) spa_loadModelCss.call(this,model);
+		},
+		spa_showModalInternal = function(model, data) {
+			if(model.css) spa_loadModelCss.call(this, model);
 			var ly = util.createModalLayer(model.html);
 			++spa_modal_index;
-			ly.ctn.addClass("spa-modal").addClass("spa-modal-index-"+spa_modal_index).attr("spa-model-id",model.id);			
-			if(model.factory && model.factory.modal){
-				model.factory.modal.call(this,data);
+			ly.ctn.addClass("spa-modal").addClass("spa-modal-index-" + spa_modal_index).attr("spa-model-id", model.id);
+			if(model.factory && model.factory.modal) {
+				model.factory.modal.call(this, data);
 			}
 		},
-		sap_cacheModel=function(model){
-			if(this.cache){
-				var m= this.cache[id]={};
+		spa_cacheModel = function(model) {
+			if(this.cache) {
+				var m = this.cache[id] = {};
 				m.html = model.html;
 				m.factory = model.factory;
 				m.css = m.css;
-				m.id = model;
+				m.id = model.id;
+				m.data = model.data;
 				delete this.res[id];
 			}
 		},
-		spa_afterLoadByMain=function(model,data){
-			spa_cacheModel.call(this,model);
-			spa_showMainInternal.call(this,model,data);
+		spa_afterLoadByMain = function(model, data) {
+			spa_cacheModel.call(this, model);
+			spa_showMainInternal.call(this, model, data);
 		},
-		spa_afterLoadByModal=function(model,data){
-			spa_cacheModel.call(this,model);
-			spa_showModalInternal.call(this,model,data);			
+		spa_afterLoadByModal = function(model, data) {
+			spa_cacheModel.call(this, model);
+			spa_showModalInternal.call(this, model, data);
 		},
-		spa_loadModel=function(model,handler,data){
-			if(model.html){
+		spa_loadModel = function(model, handler, data) {
+			var self = this;
+			if(model.html) {
 				model.state = 11;
-				spa_loadModelScript.call(this,model,handler,data);
-			}else if(model.uri){
+				if(model.script) {
+					spa_loadModelScript.call(self, model, handler, data);
+				} else {
+					handler.call(self, model, data);
+				}
+			} else if(model.uri) {
 				util.showLoading();
 				model.state = 10;
 				$.ajax({ url: model.uri, dataType: "html", type: "GET" }).done(function(hc) {
 					model.state = 11;
 					model.html = hc;
 					util.hideLoading();
-					spa_loadModelScript.call(self,model,handler,data);
+					if(model.script) {
+						spa_loadModelScript.call(self, model, handler, data);
+					} else {
+						handler.call(self, model, data);
+					}
 				}).fail(function() {
 					model.state = 12;
 					util.hideLoading();
 					util.error("load resource[" + model.id + "] html error");
 				});
-			}	
+			}
 		},
-		spa_removeModelCss=function(model){
-			if(model.css){
-				$("link").each(function(){
-					if(model.css == this.getAttribute("href")){
-						var ref = parseInt(this.getAttribute("spa-css-ref")||"1");
-						if(ref == 1){
+		spa_removeModelCss = function(model) {
+			if(model.css) {
+				$("link").each(function() {
+					if(model.css == this.getAttribute("href")) {
+						var ref = parseInt(this.getAttribute("spa-css-ref") || "1");
+						if(ref == 1) {
 							this.paretNode.removeChild(this);
-						}else{
-							this.setAttribute("spa-css-ref",""+(ref-1));
+						} else {
+							this.setAttribute("spa-css-ref", "" + (ref - 1));
 						}
-				    }
+					}
 				});
 			}
-		},		
-		spa_loadModelScript=function(model,handler,data) {
+		},
+		spa_loadModelScript = function(model, handler, data) {
 			var self = this;
-			var node = model.scriptNode = doc.createElement(EN_SCRIPT);
+			var node = doc.createElement(EN_SCRIPT);
 			node.async = CK_TRUE;
 			node.src = model.script;
 			node.charset = "UTF-8";
@@ -1382,17 +1411,15 @@ function($) {
 				model.state = 30;
 				util.showLoading();
 				try {
-					model.factory =  factoryBuilder.call(null,self);
-					head.removeChild(node);
+					model.factory = factoryBuilder.call(null, self);
 					model.state = 31;
 					util.hideLoading();
 				} catch(error) {
 					model.state = 32;
-					head.removeChild(node);
 					util.hideLoading();
-					util.error("init model["+model.id+"] error");
+					util.error("init model[" + model.id + "] error");
 				}
-				if(model.factory)handler.call(self,model,data);
+				handler.call(self, model, data);
 			}
 
 			if(supportOnload) {
@@ -1400,15 +1427,17 @@ function($) {
 					if(model.state < 21) model.state = 21;
 					node.onerror = null;
 					node.onload = null;
+					head.removeChild(node);
 					util.hideLoading();
 				};
 				node.onerror = function() {
-					if(model.state<22){
+					if(model.state < 22) {
 						model.state = 22;
 						util.error("load script error:" + model.script);
 						node.onload = null;
 						node.onerror = null;
 					}
+					head.removeChild(node);
 					util.hideLoading();
 				};
 			} else {
@@ -1422,10 +1451,12 @@ function($) {
 								if(model.state == 21) {
 									model.state = 22;
 									util.error("load script error:" + model.script);
+									head.removeChild(node);
 									util.hideLoading();
 								}
 							}, model.timeout || 1000);
 						} else {
+							head.removeChild(node);
 							util.hideLoading();
 						}
 					}
@@ -1435,11 +1466,11 @@ function($) {
 			baseElement ?
 				head.insertBefore(node, baseElement) :
 				head.appendChild(node);
-		},		
-		spa_cleanMain=function() {
+		},
+		spa_cleanMain = function() {
 			if(this.main) {
-				spa_removeModelCss.call(this,this.main);
-				if(this.main.factory.mainDestory)this.main.factory.mainDestory.call(this);
+				spa_removeModelCss.call(this, this.main);
+				if(this.main.factory && this.main.factory.mainDestory) this.main.factory.mainDestory.call(this);
 				this.mainEle.empty();
 			}
 		},
@@ -1447,83 +1478,82 @@ function($) {
 		SPA = function(ele) {
 			this.ele = ele;
 			ele.data(DK_FORM_VALUE, this);
-			if(ele.attr("cache")){
-				this.cache={};
+			if(ele.attr("cache")) {
+				this.cache = {};
 			}
 			this.menuEle = ele.find(".spa-menu");
 			this.mainEle = ele.find(".spa-main");
 			this.menuUri = ele.attr("menu");
 			this.resUri = ele.attr("resource");
+			console.log(this)
 		};
 
 	$.extend(SPA.prototype, {
 		init: function() {
-			spa_load_resouce.call(this);
+			spa_load_res.call(this);
 		},
-		showModal:function(id,data){
-			if(this.cache && this.cache[id]){
-				spa_showModalInternal.call(this,this.cache[id],data);
-			}else{
+		showModal: function(id, data) {
+			if(this.cache && this.cache[id]) {
+				spa_showModalInternal.call(this, this.cache[id], data);
+			} else {
 				var model = this.res[id];
-				if(model){
-					spa_loadModel.call(this,model,spa_afterLoadByModal,data);
-				}else{
+				if(model) {
+					spa_loadModel.call(this, model, spa_afterLoadByModal, data);
+				} else {
 					util.error("invalid resource id[" + id + "]");
 				}
 			}
 		},
-		showMain: function(id) {
-			if(!id) {
-				id = location.hash;
-				if(id && id.length > 1) {
-					id = id.substring(1);
-				} else return;
-			}
+		showMain: function() {
+			var id = location.hash;
+			if(id && id.length > 1) {
+				id = id.substring(1);
+			} else return;
 			if(this.main && id == this.main.id) return;
-			spa_cleanModel.call();
-			spa_cleanMain.call();
-			if(this.cache && this.cache[id]){
-				spa_showMainInternal.call(this,this.cache[id]);
-			}else{
+			if(this.cache && this.cache[id]) {
+				spa_showMainInternal.call(this, this.cache[id]);
+			} else {
 				var model = this.res[id];
-				if(model){
-					spa_loadModel.call(this,model,this.afterLoadByMain);
-				}else{
+				if(model) {
+					spa_loadModel.call(this, model, spa_afterLoadByMain);
+				} else {
 					util.error("invalid resource id[" + id + "]");
 				}
 			}
 		},
-		getLastModalIndex:function(){
+		getLastModalIndex: function() {
 			return sap_modal_index;
 		},
-		getLastModalCtn:function(){
-			return $("sap-modal-index-"+spa_modal_index);
+		getLastModalCtn: function() {
+			return $("sap-modal-index-" + spa_modal_index);
 		},
-		closeModal:function(){
-			var ctn=$("sap-modal-index-"+spa_modal_index);
+		closeModal: function() {
+			var ctn = $("sap-modal-index-" + spa_modal_index);
 			var id = modalCtn.attr("spa-model-id");
-			var inx = _g_layer_curr.index+1;
-			if(ctn.hasCalss("layer-"+inx)){
-				var model = this.cache?this.cache[id]:this.res[id];
-				if(model){
-					if(model.factory.modalDestory)model.factory.modalDestory.call(this);
-					if(model.css)spa_removeModelCss.call(this,model);
+			var inx = _g_layer_curr.index + 1;
+			if(ctn.hasCalss("layer-" + inx)) {
+				var model = this.cache ? this.cache[id] : this.res[id];
+				if(model) {
+					if(model.factory.modalDestory) model.factory.modalDestory.call(this);
+					if(model.css) spa_removeModelCss.call(this, model);
 					util.closeModalLayer();
 				}
-			}else{
+			} else {
 				util.error("can't close modal:has top layer ");
 			}
 		}
 	});
 
+	$.buildSpa = function() {
+		var sbody = $("body");
+		if(sbody.length == 1 && sbody.hasClass("spa-page")) {
+			$.spa = new SPA(sbody);
+			$.spa.init();
+		}
+	};
+
 	$(doc).on("click.jr_dropdown_api", dd_clearMenus);
 	$(doc).on("click.jr_dropdown_api", QF_DROP_DOWN_HAND, dd_toggle);
-	$(doc).on("click.jr_select_api", QF_BRANCH_ITEM, select_branceItem);
-	$(doc).on("click.jr_select_api", QF_SELECT_ITEM, select_selectItem);
-	$(doc).on("click.jr_mselect_remove_api", ".form-item.mselect .select-caption div", function(e) {
-		$(this).parents(QF_SELECT_CAPTION).remove();
-		e.stopPropagation();
-	});
 
 	$(doc).on("show.jr.dropdown", ".dd-ctn.date,.dd-ctn.datetime,.dd-ctn.time", function() {
 		var $dateCtn = $(this);
@@ -1655,4 +1685,5 @@ function($) {
 	$(doc).on("click", ".click-hide-parent", function() {
 		$(this).parent().hide();
 	});
+
 }(jQuery);
