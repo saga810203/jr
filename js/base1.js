@@ -130,7 +130,7 @@ function($) {
 				ly.shade = $("<div class='layer-shade layer-" + inx + "' style='z-index:" + inx + ";'></div>").appendTo(body);
 				++inx;
 				ly.ctn = $("<div class='layer-ctn layer-" + inx + "' style='z-index:" + inx + ";'></div>").appendTo(body);
-				ly.prev = _g_lay_curr;
+				ly.prev = _g_layer_curr;
 				_g_layer_curr = ly;
 				if(p) {
 					if(typeof p === "string") {
@@ -361,7 +361,7 @@ function($) {
 		dict_dictHandleCache = {},
 		dict_dictGuid = 1,
 		dict_handerArray = "handlers",
-		dict_baseUri = "/jr/js/ddict/",
+		dict_baseUri = "/js/ddict/",
 		dict_load = function(dictCode) {
 			util.showLoading();
 			$.ajax({ url: dict_baseUri + dictCode + ".json", type: "get", dataType: "json" }).done(function(data) {
@@ -1264,6 +1264,8 @@ function($) {
 				var self = this;
 				this.menuEle.find(".nav-hand").on("click", function(e) {
 					var $this = $(this);
+					pEle.find(".nav-hand.active").removeClass("active");
+					$this.addClass("active");
 					if($this.hasClass("spa-modal")) {
 						self.showModal($this.attr("res"));
 					} else {
@@ -1323,8 +1325,9 @@ function($) {
 		spa_showMainInternal = function(model) {
 			spa_cleanMain.call(this);
 			this.main = model;
-			if(model.css) sap_loadModelCss.call(this, model);
+			if(model.css) spa_loadModelCss.call(this, model);
 			if(model.html) this.mainEle.html(model.html);
+			this.mainEle.attr("spa-model-id",model.id);
 			if(model.factory && model.factory.main) {
 				model.factory.main.call(this);
 			}
@@ -1333,6 +1336,7 @@ function($) {
 			if(model.css) spa_loadModelCss.call(this, model);
 			var ly = util.createModalLayer(model.html);
 			++spa_modal_index;
+			console.log(ly.ctn)
 			ly.ctn.addClass("spa-modal").addClass("spa-modal-index-" + spa_modal_index).attr("spa-model-id", model.id);
 			if(model.factory && model.factory.modal) {
 				model.factory.modal.call(this, data);
@@ -1485,12 +1489,14 @@ function($) {
 			this.mainEle = ele.find(".spa-main");
 			this.menuUri = ele.attr("menu");
 			this.resUri = ele.attr("resource");
-			console.log(this)
 		};
 
 	$.extend(SPA.prototype, {
 		init: function() {
 			spa_load_res.call(this);
+		},
+		getModel:function(id){
+			return this.cache ? this.cache[id]:this.res[id];
 		},
 		showModal: function(id, data) {
 			if(this.cache && this.cache[id]) {
@@ -1522,13 +1528,18 @@ function($) {
 			}
 		},
 		getLastModalIndex: function() {
-			return sap_modal_index;
+			return spa_modal_index;
 		},
 		getLastModalCtn: function() {
-			return $("sap-modal-index-" + spa_modal_index);
+			return $(".spa-modal-index-" + spa_modal_index);
+		},
+		getLastModalModel:function(){
+			var ctn = $(".spa-modal-index-" + spa_modal_index);
+			var id = modalCtn.attr("spa-model-id");
+			return getModel(id);
 		},
 		closeModal: function() {
-			var ctn = $("sap-modal-index-" + spa_modal_index);
+			var ctn = $(".spa-modal-index-" + spa_modal_index);
 			var id = modalCtn.attr("spa-model-id");
 			var inx = _g_layer_curr.index + 1;
 			if(ctn.hasCalss("layer-" + inx)) {
@@ -1536,6 +1547,7 @@ function($) {
 				if(model) {
 					if(model.factory.modalDestory) model.factory.modalDestory.call(this);
 					if(model.css) spa_removeModelCss.call(this, model);
+					--spa_modal_index;
 					util.closeModalLayer();
 				}
 			} else {

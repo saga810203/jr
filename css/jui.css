@@ -19,7 +19,8 @@ html, body {
 body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, input, button, textarea, p, blockquote, th, td, form, pre {
     margin: 0;
     padding: 0;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0)
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    font-family: '微软雅黑 Regular','微软雅黑','宋体';
 }
 
 a:active, a:hover {
@@ -1892,26 +1893,21 @@ a cite {
 }
 
 .nav > li {
-    position: relative;
+    position: relative; position: relative;
     display: block;
 }
 
 .nav > li > a {
     position: relative;
     display: block;
-    padding: 8px 15px;
-    /*color: #353535*/
+    padding: 15px 15px;
 }
-
-.nav > li > a:focus, .nav > li > a:hover {
-    /*color: #0d3d88;*/
-    text-decoration: none;
-    /*background-color: #f1f1f1*/
+.nav > li > a.nav-branch-hand {
+    font-weight: bold;
 }
-
 .menu .icon.fold{
 	position: absolute;
-	top:8px;
+	top:15px;
 	right: 15px;
 	font-weight: bold;
 }
@@ -1923,7 +1919,6 @@ a cite {
 }
 .menu li.nav-parent > .nav {
     display: none;
-    /*background-color: #f6f6f6*/
 }
 
 .menu > .nav > li > .nav > li > a {
@@ -1938,8 +1933,10 @@ a cite {
     padding-left: 75px;
 }
 
-.menu > .nav > li > .nav > li > a:focus, .menu > .nav > li > .nav > li > a:hover {
+.menu a.nav-hand:focus,.menu  a.nav-hand:hover {
     /*background-color: #e4e4e4*/
+    color: blue;
+    background-color: #fff;
 }
 
 .menu .nav > li > a > i:first-child {
@@ -1947,45 +1944,17 @@ a cite {
     margin-right: 10px;
     color: grey
 }
-
-.menu .nav-root a {
-    border: 1px solid #ddd
+.menu .nav-hand.active{
+	border-left:3px solid red;
+	border-top:1px solid #c7c7c7;
+	border-bottom:1px solid #c7c7c7;
+	background-color:#fff;
+	color:blue;
+	margin-right: -1px;
 }
-
-.menu .nav-root li + li > a {
-    border-top: 0;
-}
-
-.menu .nav-parent > li > a {
-    border-left: 0;
-    border-right: 0;
-}
-
-.menu > .nav-root > li:first-child > a {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0
-}
-
-.menu>.nav-root>li:last-child > a ,.menu li:last-child li:last-child > a{
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px
-}
-.menu li.open > a {
-    border-bottom-right-radius: 0!important;
-    border-bottom-left-radius: 0!important;
-}
-
 
 .menu li.open > .nav {
     display: block
-}
-
-.menu li.open > a {
-    border-bottom: 0;
 }
 
 .dd-ctn {

@@ -4,7 +4,7 @@
 		{
 			"icon": "",
 			"res": "main1",
-			"caption": "1111111"
+			"caption": "中国1111111"
 		}, {
 			"icon": "",
 			"caption": "22222222222",
@@ -60,7 +60,8 @@
 		}, {
 			"icon": "",
 			"res": "main1",
-			"caption": "33333333333"
+			"caption": "33333333333",
+			"modal":true			
 		}, {
 			"icon": "",
 			"res": "main1",
