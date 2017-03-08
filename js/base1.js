@@ -43,18 +43,18 @@ function($) {
 		QF_OPEN = ".open",
 		CC_OPEN = "open",
 		CC_DISABLED = "disabled",
-		QF_DISABLED = ".disabled :disabled",
+		QF_DISABLED = ".disabled :disabled";
 
-		/*
-		 * AK = attribate key
-		 * DK = data key
-		 * EN = element name
-		 * TN = type name
-		 * CK = const data key  
-		 * 
-		 */
+	/*
+	 * AK = attribate key
+	 * DK = data key
+	 * EN = element name
+	 * TN = type name
+	 * CK = const data key  
+	 * 
+	 */
 
-		AK_DEF_VAL = "defVal",
+	var AK_DEF_VAL = "defVal",
 		AK_PLACEHOLDER = "placeholder",
 		AK_ID = "id",
 		AK_NAME = "name",
@@ -82,12 +82,12 @@ function($) {
 		CK_MM = "MM",
 		CK_YYYYMM = "YYYYMM",
 
-		DK_FORM_VALUE = "form_value",
+		DK_FORM_VALUE = "form_value";
 
 		/**
 		 * TK = template key
 		 */
-		TK_TEXT_INPUT = "<input type='text' />",
+		var TK_TEXT_INPUT = "<input type='text' />",
 		TK_SPAN = "<span></span>",
 		TK_UL = "<ul></ul>",
 		TK_LI = "<li></li>",
@@ -121,9 +121,9 @@ function($) {
 			this.prev.css("display", "block");
 			_g_layer_curr = this.prev;
 		},
-		_g_loadRef = 0,
+		_g_loadRef = 0;
 
-		util = {
+		var util = {
 			createModalLayer: function(p) {
 				var inx = _g_layer_curr.index + 2;
 				var ly = { index: inx, remove: layer_remove, prev: _g_layer_curr };
@@ -313,13 +313,13 @@ function($) {
 				util.ajax("post", url, null, sh, eh);
 			},
 
-		},
+		};
 
 		//begin dropdown
 		//QF == query flag
 		//CC == css class 
 
-		dd_clearMenus = function(e) {
+		var dd_clearMenus = function(e) {
 			if(e && e.which === 3) return
 			$(QF_DROP_DOWN_BACKGROUP).remove()
 			$(QF_DROP_DOWN_CONTAINER).each(function() {
@@ -1038,532 +1038,681 @@ function($) {
 			}
 			return qs;
 		},
-		get: function() {
-
-		}
+		get: function(url, data, eh) {
+			if(CK_FALSE === data) return;
+			var self = this;
+			util.get(url, data, function(rd) {
+				self.reset();
+				self.val(rd);
+			}, eh);
+		},
+		post: function(url, data, eh) {
+			if(CK_FALSE === data) return;
+			var self = this;
+			util.post(url, data, function(rd) {
+				self.reset();
+				self.val(rd);
+			}, eh);
+		},
+		doGet: function(url, sh, eh) {
+			var data = this.val();
+			if(data !== CK_FALSE) {
+				util.get(url, data, sh, eh);
+			}
+		},
+		doPost: function(url, sh, eh) {
+			var data = this.val();
+			if(data !== CK_FALSE) {
+				util.post(url, data, sh, eh);
+			}
+		},
+		doPut: function(url, sh, eh) {
+			var data = this.val();
+			if(data !== CK_FALSE) {
+				util.put(url, data, sh, eh);
+			}
+		},
+		doDel: function(url, sh, eh) {
+			var data = this.val();
+			if(data !== CK_FALSE) {
+				util.del(url, data, sh, eh);
+			}
+		},
 	});
 
 	$.fn.form = FormPlugin;
 	$.fn.form.Constructor = Jform;
-	$.dictDefine = dict_define;
 	$.util = util;
+	(function() {
+		var DK_CODE_TEMPLATE_FUNC = "code_templat_func",
+			reg_strikethrough_all = /-/g,
+			g_codeRef = 1,
 
-	var DK_CODE_TEMPLATE_FUNC = "code_templat_func",
-		reg_strikethrough_all = /-/g,
-		g_codeRef = 1,
-
-		parseCodeTemplate = function(ele, handlers) {
-			var hds = handlers;
-			ele.children(".code-template").each(function() {
-				var $this = $(this);
-				var key = $this.attr("code-func");
-				if(key) {
-					var cf = "_" + g_codeRef;
-					++g_codeRef;
-					hds[cf] = parseCodeTemplate($this, hds);
-					var ccode = "{{" + key + "-" + cf + "}}";
-					if($this.attr("tag-hlod")) {
-						$this.html(ccode);
-					} else {
-						//doc.createTextNode("{{"+key+"-"+cf+"}}");
-						//this.parentNode.replaceChild(this,doc.createTextNode("{{"+key+"-"+cf+"}}"));
-						this.parentNode.insertBefore(document.createTextNode("{{" + key + "-" + cf + "}}"), this);
-						//replaceChild(this,document.createTextNode("{{"+key+"-"+cf+"}}"));
-						$this.remove();
-					}
-				}
-			});
-			var src = $.trim(ele.html());
-			console.log(src);
-			var ret = [],
-				index = 0,
-				len = src.length,
-				b, e, ni;
-			while(index < len) {
-				b = src.indexOf('{{', index);
-				if(b != -1) {
-					ni = b + 2;
-					var e = src.indexOf('}}', ni);
-					if(e == -1) break;
-					if(b > index) {
-						ret.push({
-							f: "_copy",
-							k: null,
-							pv: [src.substring(index, b)]
-						});
-					}
-					if(e > ni) {
-						var sh = src.substring(ni, e);
-						var shlist = sh.split('-');
-						var h = {
-							pv: []
-						};
-						h.k = shlist[0];
-
-						if(shlist.length == 1) {
-							h.f = "toString";
-						} else {
-							h.f = shlist[1];
-							for(var i = 2; i < shlist.length; ++i) {
-								h.pv.push(shlist[i]);
-							}
-						}
-						h.pv.push(sh);
-						ret.push(h);
-					}
-					index = e + 2;
-				} else {
-					break;
-				}
-			}
-			if(index < len) {
-				ret.push({
-					f: "_copy",
-					k: null,
-					pv: [src.substring(index, len)]
-				});
-			}
-			return function(data) {
-				var r = [];
-				for(var i = 0; i < ret.length; ++i) {
-					var pa = [];
-					var h = ret[i];
-					pa.push(data);
-					pa.push(h.k);
-					if(h.pv && h.pv.length) {
-						for(var k = 0; k < h.pv.length; ++k) {
-							pa.push(h.pv[k]);
-						}
-					}
-					pa.push(hds);
-					h = hds[h.f] || hds["_def"];
-					r.push(h.apply(null, pa));
-				}
-				return r.join("");
-			}
-		},
-
-		hc_base_fnc = {
-			/**
-			 * def handler
-			 */
-			"_def": function() {
-				return "<!--" + arguments[arguments.length - 2].replace(reg_strikethrough_all, ' - ') + "-->";
-			},
-			/*toString   {{dKey[-privateArg]*}}       
-			 {{a-b-c-d-f}}
-			 dKey = 'a'
-			 privateArrgList is 'b','c','d','f'
-			 shellContext='a-b-c-d-f'
-			 handlers :{"b":function(data, dKey[,privateArgList...],  shellContext,handlers)}
-			 
-			 * */
-			"toString": function(data, dKey /*[,privateArgList...]*/ , shellContext, handlers) {
-				var v = data[dKey];
-				return v ? v.toString() : (v === 0 ? "0" : (v === false ? "false" : ""));
-			},
-			"_copy": function(data, key, s) {
-				return s
-			},
-
-			"list": function(data, dKey, fn) {
-				var v = data[dKey],
-					hds = arguments[arguments.length - 1],
-					r = [];
-				if(v && v.length) {
-					for(var i = 0; i < v.length; ++i) {
-						var h = hds[fn] || hds["_def"];
-						r.push(h(v[i]));
-					}
-				}
-				return r.join("");
-			}
-		},
-
-		HtmlCode = function(ele) {
-			this.ele = ele;
-			this.cache = ele.attr("cacheCode") ? true : false;
-			this.fnc = {};
-			$.extend(this.fnc, hc_base_fnc);
-			ele.data(DK_CODE_TEMPLATE_FUNC, this);
-		};
-
-	$.extend(HtmlCode.prototype, {
-		val: function(data) {
-			if(arguments.length) {
-				if(!this.hand) {
-					this.hand = parseCodeTemplate(this.ele, this.fnc, this.noHand);
-				}
-				console.log(this.hand(data));
-				this.ele.html(this.hand(data));
-			}
-		},
-		shell: function(name, func) {
-			if(name) {
-				if(func) {
-					this.fnc[name] = func;
-				} else {
-					return this.fnc[name];
-				}
-			} else {
-				return this.fnc;
-			}
-		},
-	});
-	var CodePlugin = function(val) {
-		if(this.length) {
-			var code = $(this[0]);
-			var ret = code.data(DK_CODE_TEMPLATE_FUNC);
-			if(!ret) {
-				ret = new HtmlCode(code);
-			}
-			return ret;
-		}
-	};
-	$.fn.code = CodePlugin;
-	$.fn.code.Constructor = HtmlCode;
-
-	var spa_modal_index = 0,
-		spa_load_res = function() {
-			var self = this;
-			if(this.resUri) {
-				util.get(self.resUri, null, function(data) {
-					/**
-					 * res =[{id:"",uri:"",css:"",script:""},{id:"",uri:"",css:"",script:""},...........]
-					 */
-					self.res = {};
-					for(var i = 0; i < data.length; ++i) {
-						var item = data[i];
-						self.res[item.id] = item;
-					}
-					if(self.menuUri) {
-						spa_load_menu.call(self);
-					} else {
-						self.showMain();
-					}
-				}, function(errCode, errMsg, errDetailMsg) {
-					util.error("load spa resource error");
-				})
-			}
-		},
-		spa_load_menu = function() {
-			var self = this;
-			util.get(this.menuUri, null, function(menu) {
-				self.menu = menu;
-				spa_build_menu.call(self);
-				self.showMain();
-			}, function(errCode, errMsg, errDetailMsg) {
-				util.error("load spa menu data error");
-			});
-		},
-		spa_build_menu = function() {
-			if(this.menuEle && this.menu) {
-				var pEle = $("<ul class='nav nav-root'></ul>");
-				spa_build_menu_item(this, pEle, this.menu);
-				pEle.appendTo(this.menuEle);
-				var self = this;
-				this.menuEle.find(".nav-hand").on("click", function(e) {
+			parseCodeTemplate = function(ele, handlers) {
+				var hds = handlers;
+				ele.children(".code-template").each(function() {
 					var $this = $(this);
-					pEle.find(".nav-hand.active").removeClass("active");
-					$this.addClass("active");
-					if($this.hasClass("spa-modal")) {
-						self.showModal($this.attr("res"));
-					} else {
-						location.hash = "#" + $this.attr("res");
-						self.showMain();
+					var key = $this.attr("code-func");
+					if(key) {
+						var cf = "_" + g_codeRef;
+						++g_codeRef;
+						hds[cf] = parseCodeTemplate($this, hds);
+						var ccode = "{{" + key + "-" + cf + "}}";
+						if($this.attr("tag-hlod")) {
+							$this.html(ccode);
+						} else {
+							//doc.createTextNode("{{"+key+"-"+cf+"}}");
+							//this.parentNode.replaceChild(this,doc.createTextNode("{{"+key+"-"+cf+"}}"));
+							this.parentNode.insertBefore(document.createTextNode("{{" + key + "-" + cf + "}}"), this);
+							//replaceChild(this,document.createTextNode("{{"+key+"-"+cf+"}}"));
+							$this.remove();
+						}
 					}
 				});
-				this.menuEle.find(".nav-branch-hand").on("click", function(e) {
-					$(this).parent().toggleClass("open");
-				});
-			}
-		},
-		spa_build_menu_item = function(that, pEle, items) {
-			var item, res, caption, iconClass;
-			for(var i = 0; i < items.length; ++i) {
-				item = items[i];
-				var $li = $("<li></li>");
-				var $a = $("<a href='javascript:;'></a>").appendTo($li);
-				caption = item.caption;
-				iconClass = item.icon || (item.res ? "book" : "branch");
-				$a.html("<i class='icon-" + iconClass + "'></i>" + caption);
-				if(item.res) {
-					$a.attr("res", item.res).addClass("nav-hand");
-					if(item.modal) {
-						$a.addClass("spa-modal");
+				var src = $.trim(ele.html());
+				console.log(src);
+				var ret = [],
+					index = 0,
+					len = src.length,
+					b, e, ni;
+				while(index < len) {
+					b = src.indexOf('{{', index);
+					if(b != -1) {
+						ni = b + 2;
+						var e = src.indexOf('}}', ni);
+						if(e == -1) break;
+						if(b > index) {
+							ret.push({
+								f: "_copy",
+								k: null,
+								pv: [src.substring(index, b)]
+							});
+						}
+						if(e > ni) {
+							var sh = src.substring(ni, e);
+							var shlist = sh.split('-');
+							var h = {
+								pv: []
+							};
+							h.k = shlist[0];
+
+							if(shlist.length == 1) {
+								h.f = "toString";
+							} else {
+								h.f = shlist[1];
+								for(var i = 2; i < shlist.length; ++i) {
+									h.pv.push(shlist[i]);
+								}
+							}
+							h.pv.push(sh);
+							ret.push(h);
+						}
+						index = e + 2;
+					} else {
+						break;
+					}
+				}
+				if(index < len) {
+					ret.push({
+						f: "_copy",
+						k: null,
+						pv: [src.substring(index, len)]
+					});
+				}
+				return function(data) {
+					var r = [];
+						for(var i = 0; i < ret.length; ++i) {
+							var pa = [];
+							var h = ret[i];
+							pa.push(data);
+							pa.push(h.k);
+							if(h.pv && h.pv.length) {
+								for(var k = 0; k < h.pv.length; ++k) {
+									pa.push(h.pv[k]);
+								}
+							}
+							pa.push(hds);
+							h = hds[h.f] || hds["_def"];
+							r.push(h.apply(null, pa));
+						}
+					return r.join("");
+				}
+			},
+
+			hc_base_fnc = {
+				/**
+				 * def handler
+				 */
+				"_def": function() {
+					return "<!--" + arguments[arguments.length - 2].replace(reg_strikethrough_all, ' - ') + "-->";
+				},
+				/*toString   {{dKey[-privateArg]*}}       
+				 {{a-b-c-d-f}}
+				 dKey = 'a'
+				 privateArrgList is 'b','c','d','f'
+				 shellContext='a-b-c-d-f'
+				 handlers :{"b":function(data, dKey[,privateArgList...],  shellContext,handlers)}
+				 
+				 * */
+				"toString": function(data, dKey /*[,privateArgList...]*/ , shellContext, handlers) {
+					var v =data?data[dKey]:"";
+					return v ? v.toString() : (v === 0 ? "0" : (v === false ? "false" : ""));
+				},
+				"_copy": function(data, key, s) {
+					return s
+				},
+
+				"list": function(data, dKey, fn) {
+					var v =data?data[dKey]:[],
+						hds = arguments[arguments.length - 1],
+						r = [];
+					if(v && v.length) {
+						for(var i = 0; i < v.length; ++i) {
+							var h = hds[fn] || hds["_def"];
+							r.push(h(v[i]));
+						}
+					}
+					return r.join("");
+				}
+			},
+
+			HtmlCode = function(ele) {
+				this.ele = ele;
+				this.fnc = {};
+				this.listener = [];
+				$.extend(this.fnc, hc_base_fnc);
+				ele.data(DK_CODE_TEMPLATE_FUNC, this);
+			};
+
+		$.extend(HtmlCode.prototype, {
+			val: function(data) {
+					if(!this.hand) {
+						this.hand = parseCodeTemplate(this.ele, this.fnc, this.noHand);
+					}
+					this.ele.html(this.hand(data));
+					for(var i = 0; i < this.listener.length; ++i) {
+						if(CK_FALSE === this.listener[i].call(this, data)) return;
+					}
+			},
+			empty:function(){
+				this.ele.empty();
+			},
+			shell: function(name, func) {
+				if(name) {
+					if(func) {
+						this.fnc[name] = func;
+					} else {
+						return this.fnc[name];
 					}
 				} else {
-					$a.append($("<i class='icon fold'></i>")).addClass("nav-branch-hand");
-					$li.addClass("nav-parent");
-					var $ul = $("<ul class='nav'></ul>").appendTo($li);
-					spa_build_menu_item(that, $ul, item.children);
+					return this.fnc;
 				}
-				$li.appendTo(pEle);
+			},
+			addValueListener: function(h) {
+				this.listener.push(h)
+			},
+
+		});
+		var CodePlugin = function() {
+			if(this.length) {
+				var code = $(this[0]);
+				var ret = code.data(DK_CODE_TEMPLATE_FUNC);
+				if(!ret) {
+					ret = new HtmlCode(code);
+				}
+				return ret;
 			}
-		},
-		spa_loadModelCss = function(model) {
-			if(model.css) {
-				var found = false;
-				$("link").each(function() {
-					if(model.css == this.getAttribute("href")) {
-						var ref = parseInt(this.getAttribute("spa-css-ref") || "1");
-						this.setAttribute("spa-css-ref", "" + (ref + 1));
-						found = true;
-						return false;
-					}
+		};
+		$.fn.code = CodePlugin;
+		$.fn.code.Constructor = HtmlCode;
+	})();
+
+	(function() {
+		var DK_DATA_TABLE="dk_data_table",  DataTable = function(ele) {
+			this.ele = ele;
+			this.codeRef = ele.find(".dt-tpl").code();
+			this.formRef = ele.find(".dt-form").form();
+			this.uri=ele.attr("loadUri");
+			this.ele.data(DK_DATA_TABLE,this);
+			this.eh=true;
+		};		
+		$.extend(DataTable.prototype,{
+			load:function(clear){
+				var qd = this.formRef.val();
+				if(qd===CK_FALSE) return;
+				if(clear)this.codeRef.empty();
+				var self = this;
+				util.get(self.uri,qd,function(data){
+					self.codeRef.val({"data":data,"length":data?data.length:0});
+				},self.eh);
+			},
+			error:function(eh){
+				this.eh =eh;
+			}
+		});
+		var DataTablePlugin =function(){
+			if(this.length) {
+				var dt = $(this[0]);
+				var ret = dt.data(DK_DATA_TABLE);
+				if(!ret) {
+					ret = new DataTable(code);
+				}
+				return ret;
+			}
+		}
+		$.fn.dg=DataTablePlugin;
+		$.fn.dg.Constructor = DataTable;
+		var DK_PAGE_DATA_TABLE="dk_page_data_table",
+			pdt_pager_builder = function(data){
+				
+			},
+		PageDataTable=function(ele){
+			this.ele = ele;
+			this.codeRef = ele.find(".dt-tpl").code();
+			this.formRef = ele.find(".dt-form").form();
+			this.pagerEle = ele.find(".dt-pager");
+			this.uri=ele.attr("loadUri");
+			this.pagerPrefix=ele.attr("pagerPrefix")?"_":"";
+			this.pageSize = parseInt(ele.attr("pageSize")||"1");
+			this.pageNo = parseInt(ele.attr("pageNo")||"10");
+			this.pagerBuilder = pdt_pager_builder;
+			this.ele.data(DK_PAGE_DATA_TABLE,this);
+			this.eh = true;
+		};
+		$.extend(PageDataTable.prototype,{
+			error:function(eh){this.eh = eh},
+			load:function(clear){
+				var qd = this.formRef.val();
+				if(qd===CK_FALSE) return;
+				this.cache = qd||{};
+				this.cache[this.pagerPrefix+"pageNo"]=this.pageNo;
+				this.cache[this.pagerPrefix+"pageSize"]=this.pageSize;
+				this.reload(clear);
+			},
+			reload:function(clear){
+				if(clear)this.codeRef.empty();
+				var self = this;
+				util.get(self.uri,this.cache,function(data){
+//					self.pageSize = data.pageSize;
+//					self.pageNo = data.pageNo;
+//					self.total = data.total;
+					data.length=data.data.length;
+					self.codeRef.val(data);
+					self.pagerBuilder(data);
+				},self.eh);
+			},
+			goPage:function(pageSize,pageNo){
+				this.cache[this.pagerPrefix+"pageNo"]=pageNo;
+				this.cache[this.pagerPrefix+"pageSize"]=pageSize;
+				this.reload(true);
+			}
+		});
+		var PageDataTablePlugin =function(){
+			if(this.length) {
+				var dt = $(this[0]);
+				var ret = dt.data(DK_DATA_TABLE);
+				if(!ret) {
+					ret = new PageDataTable(code);
+				}
+				return ret;
+			}
+		}
+		$.fn.pdg=PageDataTablePlugin;
+		$.fn.pdg.Constructor = PageDataTable;
+		
+		
+	})();
+
+	(function() {
+		var spa_modal_index = 0,
+			spa_load_res = function() {
+				var self = this;
+				if(this.resUri) {
+					util.get(self.resUri, null, function(data) {
+						/**
+						 * res =[{id:"",uri:"",css:"",script:""},{id:"",uri:"",css:"",script:""},...........]
+						 */
+						self.res = {};
+						for(var i = 0; i < data.length; ++i) {
+							var item = data[i];
+							self.res[item.id] = item;
+						}
+						if(self.menuUri) {
+							spa_load_menu.call(self);
+						} else {
+							self.showMain();
+						}
+					}, function(errCode, errMsg, errDetailMsg) {
+						util.error("load spa resource error");
+					})
+				}
+			},
+			spa_load_menu = function() {
+				var self = this;
+				util.get(this.menuUri, null, function(menu) {
+					self.menu = menu;
+					spa_build_menu.call(self);
+					self.showMain();
+				}, function(errCode, errMsg, errDetailMsg) {
+					util.error("load spa menu data error");
 				});
-				if(!found) {
-					var link = doc.createElement('link');
-					link.rel = 'stylesheet';
-					link.href = model.css;
-					link.media = 'all';
-					link.setAttibute("spa-css-ref", "1");
-					head.appendChild(link);
+			},
+			spa_build_menu = function() {
+				if(this.menuEle && this.menu) {
+					var pEle = $("<ul class='nav nav-root'></ul>");
+					spa_build_menu_item(this, pEle, this.menu);
+					pEle.appendTo(this.menuEle);
+					var self = this;
+					this.menuEle.find(".nav-hand").on("click", function(e) {
+						var $this = $(this);
+						pEle.find(".nav-hand.active").removeClass("active");
+						$this.addClass("active");
+						if($this.hasClass("spa-modal")) {
+							self.showModal($this.attr("res"));
+						} else {
+							location.hash = "#" + $this.attr("res");
+							self.showMain();
+						}
+					});
+					this.menuEle.find(".nav-branch-hand").on("click", function(e) {
+						var prt = $(this).parent();
+						if(prt.hasClass("open")) {
+							prt.removeClass("open");
+						} else {
+							prt.parent().children(".open").removeClass("open");
+							prt.addClass("open");
+						}
+					});
 				}
-			}
-		},
-		spa_showMainInternal = function(model) {
-			spa_cleanMain.call(this);
-			this.main = model;
-			if(model.css) spa_loadModelCss.call(this, model);
-			if(model.html) this.mainEle.html(model.html);
-			this.mainEle.attr("spa-model-id",model.id);
-			if(model.factory && model.factory.main) {
-				model.factory.main.call(this);
-			}
-		},
-		spa_showModalInternal = function(model, data) {
-			if(model.css) spa_loadModelCss.call(this, model);
-			var ly = util.createModalLayer(model.html);
-			++spa_modal_index;
-			console.log(ly.ctn)
-			ly.ctn.addClass("spa-modal").addClass("spa-modal-index-" + spa_modal_index).attr("spa-model-id", model.id);
-			if(model.factory && model.factory.modal) {
-				model.factory.modal.call(this, data);
-			}
-		},
-		spa_cacheModel = function(model) {
-			if(this.cache) {
-				var m = this.cache[id] = {};
+			},
+			spa_build_menu_item = function(that, pEle, items) {
+				var item, res, caption, iconClass;
+				for(var i = 0; i < items.length; ++i) {
+					item = items[i];
+					var $li = $("<li></li>");
+					var $a = $("<a href='javascript:;'></a>").appendTo($li);
+					caption = item.caption;
+					iconClass = item.icon || (item.res ? "book" : "branch");
+					$a.html("<i class='icon-" + iconClass + "'></i>" + caption);
+					if(item.res) {
+						$a.attr("res", item.res).addClass("nav-hand");
+						if(item.modal) {
+							$a.addClass("spa-modal");
+						}
+					} else {
+						$a.append($("<i class='icon fold'></i>")).addClass("nav-branch-hand");
+						$li.addClass("nav-parent");
+						var $ul = $("<ul class='nav'></ul>").appendTo($li);
+						spa_build_menu_item(that, $ul, item.children);
+					}
+					$li.appendTo(pEle);
+				}
+			},
+			spa_loadModelCss = function(model) {
+				if(model.css) {
+					var found = false;
+					$("link").each(function() {
+						if(model.css == this.getAttribute("href")) {
+							var ref = parseInt(this.getAttribute("spa-css-ref") || "1");
+							this.setAttribute("spa-css-ref", "" + (ref + 1));
+							found = true;
+							return false;
+						}
+					});
+					if(!found) {
+						var link = doc.createElement('link');
+						link.rel = 'stylesheet';
+						link.href = model.css;
+						link.media = 'all';
+						link.setAttibute("spa-css-ref", "1");
+						head.appendChild(link);
+					}
+				}
+			},
+			spa_showMainInternal = function(model) {
+				spa_cleanMain.call(this);
+				this.main = model;
+				if(model.css) spa_loadModelCss.call(this, model);
+				if(model.html) this.mainEle.html(model.html);
+				this.mainEle.attr("spa-model-id", model.id);
+				if(model.factory && model.factory.main) {
+					model.factory.main.call(this);
+				}
+			},
+			spa_showModalInternal = function(model, data) {
+				if(model.css) spa_loadModelCss.call(this, model);
+				var ly = util.createModalLayer(model.html);
+				++spa_modal_index;
+				console.log(ly.ctn)
+				ly.ctn.addClass("spa-modal").addClass("spa-modal-index-" + spa_modal_index).attr("spa-model-id", model.id);
+				if(model.factory && model.factory.modal) {
+					model.factory.modal.call(this, data);
+				}
+			},
+			spa_cacheModel = function(model) {
+				var m = this.cache[model.id] = {};
 				m.html = model.html;
 				m.factory = model.factory;
 				m.css = m.css;
 				m.id = model.id;
 				m.data = model.data;
-				delete this.res[id];
-			}
-		},
-		spa_afterLoadByMain = function(model, data) {
-			spa_cacheModel.call(this, model);
-			spa_showMainInternal.call(this, model, data);
-		},
-		spa_afterLoadByModal = function(model, data) {
-			spa_cacheModel.call(this, model);
-			spa_showModalInternal.call(this, model, data);
-		},
-		spa_loadModel = function(model, handler, data) {
-			var self = this;
-			if(model.html) {
-				model.state = 11;
-				if(model.script) {
-					spa_loadModelScript.call(self, model, handler, data);
-				} else {
-					handler.call(self, model, data);
-				}
-			} else if(model.uri) {
-				util.showLoading();
-				model.state = 10;
-				$.ajax({ url: model.uri, dataType: "html", type: "GET" }).done(function(hc) {
+				delete this.res[model.id];
+				return m;
+			},
+			spa_afterLoadByMain = function(model,data) {
+				spa_showMainInternal.call(this, spa_cacheModel.call(this, model));
+			},
+			spa_afterLoadByModal = function(model, data) {
+				spa_showModalInternal.call(this, spa_cacheModel.call(this, model), data);
+			},
+			spa_loadModel = function(model, handler, data) {
+				var self = this;
+				if(model.html) {
 					model.state = 11;
-					model.html = hc;
-					util.hideLoading();
 					if(model.script) {
 						spa_loadModelScript.call(self, model, handler, data);
 					} else {
 						handler.call(self, model, data);
 					}
-				}).fail(function() {
-					model.state = 12;
-					util.hideLoading();
-					util.error("load resource[" + model.id + "] html error");
-				});
-			}
-		},
-		spa_removeModelCss = function(model) {
-			if(model.css) {
-				$("link").each(function() {
-					if(model.css == this.getAttribute("href")) {
-						var ref = parseInt(this.getAttribute("spa-css-ref") || "1");
-						if(ref == 1) {
-							this.paretNode.removeChild(this);
+				} else if(model.uri) {
+					util.showLoading();
+					model.state = 10;
+					$.ajax({ url: model.uri, dataType: "html", type: "GET" }).done(function(hc) {
+						model.state = 11;
+						model.html = hc;
+						util.hideLoading();
+						if(model.script) {
+							spa_loadModelScript.call(self, model, handler, data);
 						} else {
-							this.setAttribute("spa-css-ref", "" + (ref - 1));
+							handler.call(self, model, data);
 						}
-					}
-				});
-			}
-		},
-		spa_loadModelScript = function(model, handler, data) {
-			var self = this;
-			var node = doc.createElement(EN_SCRIPT);
-			node.async = CK_TRUE;
-			node.src = model.script;
-			node.charset = "UTF-8";
-			var supportOnload = "onload" in node;
-			util.showLoading();
-			window.spa_define = function(factoryBuilder) {
-				model.state = 30;
-				util.showLoading();
-				try {
-					model.factory = factoryBuilder.call(null, self);
+					}).fail(function() {
+						model.state = 12;
+						util.hideLoading();
+						util.error("load resource[" + model.id + "] html error");
+					});
+				}
+			},
+			spa_removeModelCss = function(model) {
+				if(model.css) {
+					$("link").each(function() {
+						if(model.css == this.getAttribute("href")) {
+							var ref = parseInt(this.getAttribute("spa-css-ref") || "1");
+							if(ref == 1) {
+								this.paretNode.removeChild(this);
+							} else {
+								this.setAttribute("spa-css-ref", "" + (ref - 1));
+							}
+						}
+					});
+				}
+			},
+			spa_loadModelScript = function(model, handler, data) {
+				var self = this;
+				model.factory = this.scriptCache[model.script];
+				if(model.factory) {
 					model.state = 31;
-					util.hideLoading();
-				} catch(error) {
-					model.state = 32;
-					util.hideLoading();
-					util.error("init model[" + model.id + "] error");
+					handler.call(this, model, data);
+					return;
 				}
-				handler.call(self, model, data);
-			}
+				var node = doc.createElement(EN_SCRIPT);
+				node.async = CK_TRUE;
+				node.src = model.script;
+				node.charset = "UTF-8";
+				var supportOnload = "onload" in node;
+				util.showLoading();
+				window.spa_define = function(factoryBuilder) {
+					model.state = 30;
+					util.showLoading();
+					try {
+						self.scriptCache[model.script] = model.factory = factoryBuilder.call(null, self);
+						model.state = 31;
+						util.hideLoading();
+					} catch(error) {
+						model.state = 32;
+						util.hideLoading();
+						util.error("init model[" + model.id + "] error");
+					}
+					handler.call(self, model, data);
+				}
 
-			if(supportOnload) {
-				node.onload = function() {
-					if(model.state < 21) model.state = 21;
-					node.onerror = null;
-					node.onload = null;
-					head.removeChild(node);
-					util.hideLoading();
-				};
-				node.onerror = function() {
-					if(model.state < 22) {
-						model.state = 22;
-						util.error("load script error:" + model.script);
-						node.onload = null;
+				if(supportOnload) {
+					node.onload = function() {
+						if(model.state < 21) model.state = 21;
 						node.onerror = null;
-					}
-					head.removeChild(node);
-					util.hideLoading();
-				};
-			} else {
-				node.onreadystatechange = function() {
-					if(/loaded|complete/.test(node.readyState)) {
-						node.onreadystatechange = null;
-						if(model.state < 21) {
-							model.state = 21;
-							var to = model.timeout || 1000;
-							setTimeout(function() {
-								if(model.state == 21) {
-									model.state = 22;
-									util.error("load script error:" + model.script);
-									head.removeChild(node);
-									util.hideLoading();
-								}
-							}, model.timeout || 1000);
-						} else {
-							head.removeChild(node);
-							util.hideLoading();
+						node.onload = null;
+						head.removeChild(node);
+						util.hideLoading();
+					};
+					node.onerror = function() {
+						if(model.state < 22) {
+							model.state = 22;
+							util.error("load script error:" + model.script);
+							node.onload = null;
+							node.onerror = null;
 						}
-					}
-				};
-			}
-			model.state = 20;
-			baseElement ?
-				head.insertBefore(node, baseElement) :
-				head.appendChild(node);
-		},
-		spa_cleanMain = function() {
-			if(this.main) {
-				spa_removeModelCss.call(this, this.main);
-				if(this.main.factory && this.main.factory.mainDestory) this.main.factory.mainDestory.call(this);
-				this.mainEle.empty();
-			}
-		},
+						head.removeChild(node);
+						util.hideLoading();
+					};
+				} else {
+					node.onreadystatechange = function() {
+						if(/loaded|complete/.test(node.readyState)) {
+							node.onreadystatechange = null;
+							if(model.state < 21) {
+								model.state = 21;
+								var to = model.timeout || 1000;
+								setTimeout(function() {
+									if(model.state == 21) {
+										model.state = 22;
+										util.error("load script error:" + model.script);
+										head.removeChild(node);
+										util.hideLoading();
+									}
+								}, model.timeout || 1000);
+							} else {
+								head.removeChild(node);
+								util.hideLoading();
+							}
+						}
+					};
+				}
+				model.state = 20;
+				baseElement ?
+					head.insertBefore(node, baseElement) :
+					head.appendChild(node);
+			},
+			spa_cleanMain = function() {
+				if(this.main) {
+					spa_removeModelCss.call(this, this.main);
+					if(this.main.factory && this.main.factory.mainDestory) this.main.factory.mainDestory.call(this);
+					this.mainEle.empty();
+				}
+			},
 
-		SPA = function(ele) {
-			this.ele = ele;
-			ele.data(DK_FORM_VALUE, this);
-			if(ele.attr("cache")) {
+			SPA = function(ele) {
+				this.ele = ele;
+				ele.data(DK_FORM_VALUE, this);
+				this.menuEle = ele.find(".spa-menu");
+				this.mainEle = ele.find(".spa-main");
+				this.menuUri = ele.attr("menu");
+				this.resUri = ele.attr("resource");
 				this.cache = {};
+				this.scriptCache ={};
+			};
+
+		$.extend(SPA.prototype, {
+			init: function() {
+				spa_load_res.call(this);
+			},
+			getModel: function(id) {
+				return this.cache ? this.cache[id] : this.res[id];
+			},
+			showModal: function(id, data) {
+				if(this.cache[id]) {
+					spa_showModalInternal.call(this, this.cache[id], data);
+				} else {
+					var model = this.res[id];
+					if(model) {
+						spa_loadModel.call(this, model, spa_afterLoadByModal, data);
+					} else {
+						util.error("invalid resource id[" + id + "]");
+					}
+				}
+			},
+			showMain: function() {
+				var id = location.hash;
+				if(id && id.length > 1) {
+					id = id.substring(1);
+				} else return;
+				if(this.main && id == this.main.id) return;
+				if(this.cache[id]) {
+					spa_showMainInternal.call(this, this.cache[id]);
+				} else {
+					var model = this.res[id];
+					if(model) {
+						spa_loadModel.call(this, model, spa_afterLoadByMain);
+					} else {
+						util.error("invalid resource id[" + id + "]");
+					}
+				}
+			},
+			getLastModalIndex: function() {
+				return spa_modal_index;
+			},
+			getLastModalCtn: function() {
+				return $(".spa-modal-index-" + spa_modal_index);
+			},
+			getLastModalModel: function() {
+				var ctn = $(".spa-modal-index-" + spa_modal_index);
+				var id = modalCtn.attr("spa-model-id");
+				return getModel(id);
+			},
+			closeModal: function() {
+				var ctn = $(".spa-modal-index-" + spa_modal_index);
+				var id = modalCtn.attr("spa-model-id");
+				var inx = _g_layer_curr.index + 1;
+				if(ctn.hasCalss("layer-" + inx)) {
+					var model = this.cache ? this.cache[id] : this.res[id];
+					if(model) {
+						if(model.factory.modalDestory) model.factory.modalDestory.call(this);
+						if(model.css) spa_removeModelCss.call(this, model);
+						--spa_modal_index;
+						util.closeModalLayer();
+					}
+				} else {
+					util.error("can't close modal:has top layer ");
+				}
 			}
-			this.menuEle = ele.find(".spa-menu");
-			this.mainEle = ele.find(".spa-main");
-			this.menuUri = ele.attr("menu");
-			this.resUri = ele.attr("resource");
+		});
+
+		$.buildSpa = function() {
+			var sbody = $("body");
+			if(sbody.length == 1 && sbody.hasClass("spa-page")) {
+				$.spa = new SPA(sbody);
+				$.spa.init();
+			}
 		};
-
-	$.extend(SPA.prototype, {
-		init: function() {
-			spa_load_res.call(this);
-		},
-		getModel:function(id){
-			return this.cache ? this.cache[id]:this.res[id];
-		},
-		showModal: function(id, data) {
-			if(this.cache && this.cache[id]) {
-				spa_showModalInternal.call(this, this.cache[id], data);
-			} else {
-				var model = this.res[id];
-				if(model) {
-					spa_loadModel.call(this, model, spa_afterLoadByModal, data);
-				} else {
-					util.error("invalid resource id[" + id + "]");
-				}
-			}
-		},
-		showMain: function() {
-			var id = location.hash;
-			if(id && id.length > 1) {
-				id = id.substring(1);
-			} else return;
-			if(this.main && id == this.main.id) return;
-			if(this.cache && this.cache[id]) {
-				spa_showMainInternal.call(this, this.cache[id]);
-			} else {
-				var model = this.res[id];
-				if(model) {
-					spa_loadModel.call(this, model, spa_afterLoadByMain);
-				} else {
-					util.error("invalid resource id[" + id + "]");
-				}
-			}
-		},
-		getLastModalIndex: function() {
-			return spa_modal_index;
-		},
-		getLastModalCtn: function() {
-			return $(".spa-modal-index-" + spa_modal_index);
-		},
-		getLastModalModel:function(){
-			var ctn = $(".spa-modal-index-" + spa_modal_index);
-			var id = modalCtn.attr("spa-model-id");
-			return getModel(id);
-		},
-		closeModal: function() {
-			var ctn = $(".spa-modal-index-" + spa_modal_index);
-			var id = modalCtn.attr("spa-model-id");
-			var inx = _g_layer_curr.index + 1;
-			if(ctn.hasCalss("layer-" + inx)) {
-				var model = this.cache ? this.cache[id] : this.res[id];
-				if(model) {
-					if(model.factory.modalDestory) model.factory.modalDestory.call(this);
-					if(model.css) spa_removeModelCss.call(this, model);
-					--spa_modal_index;
-					util.closeModalLayer();
-				}
-			} else {
-				util.error("can't close modal:has top layer ");
-			}
-		}
-	});
-
-	$.buildSpa = function() {
-		var sbody = $("body");
-		if(sbody.length == 1 && sbody.hasClass("spa-page")) {
-			$.spa = new SPA(sbody);
-			$.spa.init();
-		}
-	};
-
+	})();
 	$(doc).on("click.jr_dropdown_api", dd_clearMenus);
 	$(doc).on("click.jr_dropdown_api", QF_DROP_DOWN_HAND, dd_toggle);
 
