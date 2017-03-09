@@ -1,4 +1,66 @@
-<div class="main1">
-	main1;
-	
+<div class="main1"  loadUri="js/data/presource.json" pageSize="10" pageNo="1">
+	<div class="container dt-form">
+		<div class="row">
+			<div class="col-2 item-caption">资源ID</div>
+			<div class="col-4">
+				<div class="form-item text" defVal="" name="id"></div>
+			</div>
+			<div class="col-2 item-caption ">资源名称</div>
+			<div class="col-4">
+				<div class="form-item text" defVal="" name="caption"></div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-2 item-caption ">资源URI</div>
+			<div class="col-4">
+				<div class="form-item text" defVal="" name="uri"></div>
+			</div>
+			<div class="col-2 item-caption ">资源CSS</div>
+			<div class="col-4">
+				<div class="form-item text" defVal="" name="css"></div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-2 item-caption ">资源SCRIPT</div>
+			<div class="col-4">
+				<div class="form-item text" defVal="" name="script"></div>
+			</div>
+			<div class="col-2 item-caption required">是否支持MODAL</div>
+			<div class="col-4">
+				<div class="form-item select" dictCode="bool" name="modal" defVal="0"></div>
+			</div>
+		</div>
+	</div>
+	<div class="container form-btns">
+		<button class="btn query" type="button">查询</button>
+		<button class="btn reset" type="button">重置</button>
+	</div>
+
+	<div class="container page-split"></div>
+	<div class="container tpl-btns"></div>
+	<div class="container dt-tpl">
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>名称</th>
+					<th>URI</th>
+					<th>CSS</th>
+					<th>SCRIPT</th>
+					<th>MODAL</th>
+				</tr>
+			</thead>
+			<tbody class="code-tpl code-tag-hold" code-func="data-list">
+				<tr>
+					<td item-id="{{id}}">{{any-[]}}</td>
+					<td>{{caption}}</td>
+					<td>{{uri}}</td>
+					<td>{{css}}</td>
+					<td>{{script}}</td>
+					<td class="do-dict-code" dict="bool" code="{{modal}}"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<ul class="dt-pager"></ul>
 </div>

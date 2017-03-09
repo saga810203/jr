@@ -84,10 +84,10 @@ function($) {
 
 		DK_FORM_VALUE = "form_value";
 
-		/**
-		 * TK = template key
-		 */
-		var TK_TEXT_INPUT = "<input type='text' />",
+	/**
+	 * TK = template key
+	 */
+	var TK_TEXT_INPUT = "<input type='text' />",
 		TK_SPAN = "<span></span>",
 		TK_UL = "<ul></ul>",
 		TK_LI = "<li></li>",
@@ -123,203 +123,203 @@ function($) {
 		},
 		_g_loadRef = 0;
 
-		var util = {
-			createModalLayer: function(p) {
-				var inx = _g_layer_curr.index + 2;
-				var ly = { index: inx, remove: layer_remove, prev: _g_layer_curr };
-				ly.shade = $("<div class='layer-shade layer-" + inx + "' style='z-index:" + inx + ";'></div>").appendTo(body);
-				++inx;
-				ly.ctn = $("<div class='layer-ctn layer-" + inx + "' style='z-index:" + inx + ";'></div>").appendTo(body);
-				ly.prev = _g_layer_curr;
-				_g_layer_curr = ly;
-				if(p) {
-					if(typeof p === "string") {
-						ly.ctn.html(p);
-					} else if(typeof p == "function") {
-						p.call(ly.ctn);
-					} else if(p.jquery) {
-						ly.ctn.append(p);
+	var util = {
+		createModalLayer: function(p) {
+			var inx = _g_layer_curr.index + 2;
+			var ly = { index: inx, remove: layer_remove, prev: _g_layer_curr };
+			ly.shade = $("<div class='layer-shade layer-" + inx + "' style='z-index:" + inx + ";'></div>").appendTo(body);
+			++inx;
+			ly.ctn = $("<div class='layer-ctn layer-" + inx + "' style='z-index:" + inx + ";'></div>").appendTo(body);
+			ly.prev = _g_layer_curr;
+			_g_layer_curr = ly;
+			if(p) {
+				if(typeof p === "string") {
+					ly.ctn.html(p);
+				} else if(typeof p == "function") {
+					p.call(ly.ctn);
+				} else if(p.jquery) {
+					ly.ctn.append(p);
+				}
+			}
+			return ly;
+		},
+		closeModalLayer: function() {
+			_g_layer_curr.remove();
+		},
+
+		// parent is body z-index = 9999999
+		// *弹出错误信息，会自动消失
+		//cnt String or jquery obj
+		//msg container is div
+		//$(msg container).text(String)  or $(msg container).append(jquery obj); 
+		error: function(cnt, timeInternal) {
+			var $errCtn = $("<div class='err-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_errDiv);
+			$(TK_SPAN).appendTo($errCtn).html(cnt);
+			setTimeout(function() {
+				$errCtn.remove()
+			}, timeInternal ? timeInternal : 5000);
+		},
+		//弹出警告信息，会自动消失  ref  Util.error
+		warn: function(cnt, timeInternal) {
+			var $warnCtn = $("<div class='warn-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_warnDiv);
+			$(TK_SPAN).appendTo($warnCtn).html(cnt);
+			setTimeout(function() {
+				$warnCtn.remove()
+			}, timeInternal ? timeInternal : 3000);
+		},
+		//弹出提示信息，会自动消失 ref  Util.error
+		msg: function(cnt, timeInternal) {
+			var $msgCtn = $("<div class='msg-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_msgDiv);
+			$(TK_SPAN).appendTo($msgCtn).html(cnt);
+			setTimeout(function() {
+				$msgCtn.remove()
+			}, timeInternal ? timeInternal : 2000);
+		},
+
+		//弹出加载信息遮罩    parent  is  body     z-index =  9999998; 
+		showLoading: function() {
+			++_g_loadRef;
+			if(_g_loadRef === 1) {
+				_loadingDiv.show()
+			}
+
+		},
+		//隐藏加载信息遮罩    parent  is  body     z-index =  9999998; 
+		hideLoading: function() {
+			--_g_loadRef;
+			if(_g_loadRef === 0) {
+				_loadingDiv.hide()
+			}
+		},
+		/*
+		 * 弹出提示信息，不会自动消失    parent is body z - index 5000000 - 9999997
+		 */
+		alertMsg: function(cnt) {},
+		/*
+		 *弹出确认信息，不会自动消失    parent is body z - index 1000000 - 4999999 
+		 * btns is Array 
+		 * btns like [{catpion:"button caption",handler:function(){}},...]
+		 */
+		boxMsg: function(cnt, btns) {},
+
+		/*
+		 *弹出确认信息，不会自动消失    parent is body z - index 1000000 - 4999999 
+		 * == Util.boxMsg(cnt,[{caption:"确定"，handler:yesHandler},{caption:"取消",handler:noHandler}]);
+		 */
+		confirmMsg: function(cnt, yesHandler, noHandler) {},
+
+		loadScript: function(url) {
+			var node = doc.createElement(EN_SCRIPT);
+			node.async = CK_TRUE;
+			node.src = url;
+			node.charset = "UTF-8";
+			var supportOnload = "onload" in node;
+			util.showLoading();
+			if(supportOnload) {
+				//todo:dddd
+				node.onload = function() {
+					node.onerror = null;
+					node.onload = null;
+					util.hideLoading();
+				};
+				//todo:dddd
+				node.onerror = function() {
+					util.error("load script error:" + url);
+					node.onload = null;
+					node.onerror = null;
+					util.hideLoading();
+				};
+			} else {
+				//todo:dddd
+				node.onreadystatechange = function() {
+					if(/loaded|complete/.test(node.readyState)) {
+						node.onreadystatechange = null;
+						util.msg("load script over:" + url);
+						util.hideLoading();
 					}
-				}
-				return ly;
-			},
-			closeModalLayer: function() {
-				_g_layer_curr.remove();
-			},
+				};
+			}
+			baseElement ?
+				head.insertBefore(node, baseElement) :
+				head.appendChild(node);
+		},
 
-			// parent is body z-index = 9999999
-			// *弹出错误信息，会自动消失
-			//cnt String or jquery obj
-			//msg container is div
-			//$(msg container).text(String)  or $(msg container).append(jquery obj); 
-			error: function(cnt, timeInternal) {
-				var $errCtn = $("<div class='err-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_errDiv);
-				$(TK_SPAN).appendTo($errCtn).html(cnt);
-				setTimeout(function() {
-					$errCtn.remove()
-				}, timeInternal ? timeInternal : 5000);
-			},
-			//弹出警告信息，会自动消失  ref  Util.error
-			warn: function(cnt, timeInternal) {
-				var $warnCtn = $("<div class='warn-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_warnDiv);
-				$(TK_SPAN).appendTo($warnCtn).html(cnt);
-				setTimeout(function() {
-					$warnCtn.remove()
-				}, timeInternal ? timeInternal : 3000);
-			},
-			//弹出提示信息，会自动消失 ref  Util.error
-			msg: function(cnt, timeInternal) {
-				var $msgCtn = $("<div class='msg-ctn'><i class='icon click-hide-parent'></i></div>").appendTo(_msgDiv);
-				$(TK_SPAN).appendTo($msgCtn).html(cnt);
-				setTimeout(function() {
-					$msgCtn.remove()
-				}, timeInternal ? timeInternal : 2000);
-			},
+		loadCSS: function(href) {
+			var link = doc.createElement('link');
 
-			//弹出加载信息遮罩    parent  is  body     z-index =  9999998; 
-			showLoading: function() {
-				++_g_loadRef;
-				if(_g_loadRef === 1) {
-					_loadingDiv.show()
-				}
-
-			},
-			//隐藏加载信息遮罩    parent  is  body     z-index =  9999998; 
-			hideLoading: function() {
-				--_g_loadRef;
-				if(_g_loadRef === 0) {
-					_loadingDiv.hide()
-				}
-			},
-			/*
-			 * 弹出提示信息，不会自动消失    parent is body z - index 5000000 - 9999997
-			 */
-			alertMsg: function(cnt) {},
-			/*
-			 *弹出确认信息，不会自动消失    parent is body z - index 1000000 - 4999999 
-			 * btns is Array 
-			 * btns like [{catpion:"button caption",handler:function(){}},...]
-			 */
-			boxMsg: function(cnt, btns) {},
-
-			/*
-			 *弹出确认信息，不会自动消失    parent is body z - index 1000000 - 4999999 
-			 * == Util.boxMsg(cnt,[{caption:"确定"，handler:yesHandler},{caption:"取消",handler:noHandler}]);
-			 */
-			confirmMsg: function(cnt, yesHandler, noHandler) {},
-
-			loadScript: function(url) {
-				var node = doc.createElement(EN_SCRIPT);
-				node.async = CK_TRUE;
-				node.src = url;
-				node.charset = "UTF-8";
-				var supportOnload = "onload" in node;
-				util.showLoading();
-				if(supportOnload) {
-					//todo:dddd
-					node.onload = function() {
-						node.onerror = null;
-						node.onload = null;
-						util.hideLoading();
-					};
-					//todo:dddd
-					node.onerror = function() {
-						util.error("load script error:" + url);
-						node.onload = null;
-						node.onerror = null;
-						util.hideLoading();
-					};
+			link.rel = 'stylesheet';
+			link.href = href;
+			link.media = 'all';
+			var id = "g_css_" + _g_css_ref;
+			++_g_css_ref;
+			link.id = id;
+			head.appendChild(link);
+			return id;
+		},
+		removeCSS: function(id) {
+			var node = doc.getElementById(id);
+			if(node) {
+				head.removeChild(node);
+			}
+		},
+		regErrorHandler: function(key, handler) {
+			_g_err_msg[key] = handler;
+		},
+		ajax: function(method, pUrl, pData, sh, eh) {
+			util.showLoading();
+			$.ajax({
+				type: method,
+				url: pUrl,
+				data: pData,
+				contentType: method == "put" ? "application/json" : "application/x-www-form-urlencoded",
+			}).done(function(rd) {
+				if(rd.success) {
+					sh(rd.data);
 				} else {
-					//todo:dddd
-					node.onreadystatechange = function() {
-						if(/loaded|complete/.test(node.readyState)) {
-							node.onreadystatechange = null;
-							util.msg("load script over:" + url);
-							util.hideLoading();
-						}
-					};
-				}
-				baseElement ?
-					head.insertBefore(node, baseElement) :
-					head.appendChild(node);
-			},
-
-			loadCSS: function(href) {
-				var link = doc.createElement('link');
-
-				link.rel = 'stylesheet';
-				link.href = href;
-				link.media = 'all';
-				var id = "g_css_" + _g_css_ref;
-				++_g_css_ref;
-				link.id = id;
-				head.appendChild(link);
-				return id;
-			},
-			removeCSS: function(id) {
-				var node = doc.getElementById(id);
-				if(node) {
-					head.removeChild(node);
-				}
-			},
-			regErrorHandler: function(key, handler) {
-				_g_err_msg[key] = handler;
-			},
-			ajax: function(method, pUrl, pData, sh, eh) {
-				util.showLoading();
-				$.ajax({
-					type: method,
-					url: pUrl,
-					data: pData,
-					contentType: method == "put" ? "application/json" : "application/x-www-form-urlencoded",
-				}).done(function(rd) {
-					if(rd.success) {
-						sh(rd.data);
-					} else {
-						if(eh) {
-							var eht = $.type(eh);
-							if(eht == TN_FNC) {
-								eh(rd.code, rd.msg, rd.detailMsg);
-							} else if(eht == TN_BOOL) {
-								if(eht) {
-									util.error("load resource error:" + pUrl + "\n" + (rd.detailMsg ? rd.detailMsg : ""));
-								}
-							} else {
-								var msg = eh["" + rd.code] || _g_err_msg["" + rd.code];
-								if(msg) {
-									if($.type(msg) == TN_FNC) {
-										msg(rd.code, rd.msg, rd.detailMsg);
-									} else {
-										util.error(msg ? msg : "未定义的错误");
-									}
+					if(eh) {
+						var eht = $.type(eh);
+						if(eht == TN_FNC) {
+							eh(rd.code, rd.msg, rd.detailMsg);
+						} else if(eht == TN_BOOL) {
+							if(eht) {
+								util.error("load resource error:" + pUrl + "\n" + (rd.detailMsg ? rd.detailMsg : ""));
+							}
+						} else {
+							var msg = eh["" + rd.code] || _g_err_msg["" + rd.code];
+							if(msg) {
+								if($.type(msg) == TN_FNC) {
+									msg(rd.code, rd.msg, rd.detailMsg);
+								} else {
+									util.error(msg ? msg : "未定义的错误");
 								}
 							}
 						}
 					}
-				}).fail(function(jqXHR, textStatus, errorThrown) {
-					util.msg("load resouce[" + pUrl + "] error:" + textStatus);
-				}).always(util.hideLoading);
-			},
-			get: function(url, data, sh, eh) {
-				util.ajax("get", url, data, sh, eh);
-			},
-			post: function(url, data, sh, eh) {
-				util.ajax("post", url, data, sh, eh);
-			},
-			put: function(url, data, sh, eh) {
-				util.ajax("put", url, data, sh, eh);
-			},
-			del: function(url, sh, eh) {
-				util.ajax("post", url, null, sh, eh);
-			},
+				}
+			}).fail(function(jqXHR, textStatus, errorThrown) {
+				util.msg("load resouce[" + pUrl + "] error:" + textStatus);
+			}).always(util.hideLoading);
+		},
+		get: function(url, data, sh, eh) {
+			util.ajax("get", url, data, sh, eh);
+		},
+		post: function(url, data, sh, eh) {
+			util.ajax("post", url, data, sh, eh);
+		},
+		put: function(url, data, sh, eh) {
+			util.ajax("put", url, data, sh, eh);
+		},
+		del: function(url, sh, eh) {
+			util.ajax("post", url, null, sh, eh);
+		},
 
-		};
+	};
 
-		//begin dropdown
-		//QF == query flag
-		//CC == css class 
+	//begin dropdown
+	//QF == query flag
+	//CC == css class 
 
-		var dd_clearMenus = function(e) {
+	var dd_clearMenus = function(e) {
 			if(e && e.which === 3) return
 			$(QF_DROP_DOWN_BACKGROUP).remove()
 			$(QF_DROP_DOWN_CONTAINER).each(function() {
@@ -806,7 +806,7 @@ function($) {
 				var ct = (val === null ? "" : ("" + val));
 				this.showOnly ? this.ele.text(ct) : this.valEle.val(ct);
 			} else if(!this.isShowOnly) {
-				var v = this.codeEle.val();
+				var v = this.valEle.val();
 				v = this.trimed ? $.trim(v) : v;
 				return this.dt == 0 ? v : (v ? (this.dt == 1 ? parseInt(v) : parseFloat(v)) : 0);
 			}
@@ -815,11 +815,12 @@ function($) {
 			this.val(this.dv);
 		},
 		validate: function() {
-			var vtext = this.valEle.val();
-			if(this.trimed && vtext) vtext = $.trim(vtext);
-			if(this.ele.attr(AK_REQUIRED)) {
-				if(!vtext) return "required";
-			}
+			//			var vtext = this.valEle.val();
+			//			if(this.trimed && vtext) vtext = $.trim(vtext);
+			//			if(this.ele.attr(AK_REQUIRED)) {
+			//				if(!vtext) return "required";
+			//			}
+			return true;
 		}
 	});
 	$.extend(Jselect.prototype, {
@@ -856,10 +857,11 @@ function($) {
 			select_change(this, this.dv);
 		},
 		validate: function() {
-			var vtext = this.codeEle.val();
-			if(this.ele.attr(AK_REQUIRED)) {
-				if(!vtext) return "required";
-			}
+			return true;
+			//			var vtext = this.codeEle.val();
+			//			if(this.ele.attr(AK_REQUIRED)) {
+			//				if(!vtext) return "required";
+			//			}
 		},
 
 		selectItem: function($item, evt) {
@@ -1087,30 +1089,49 @@ function($) {
 		var DK_CODE_TEMPLATE_FUNC = "code_templat_func",
 			reg_strikethrough_all = /-/g,
 			g_codeRef = 1,
+			qf = function(pnd) {
+				var cr = pnd.children;
+				for(var i = 0; i < cr.length; ++i) {
+					var nd = cr[i];
+					if(nd.nodeType == 1) {
+						var $nd = $(nd);
+						if($nd.hasClass("code-tpl")) {
+							$nd.removeClass("code-tpl");
+							return nd;
+						}
+						$nd = qf(nd);
+						if($nd) return $nd;
+					}
+				};
+				return null;
+			},
 
 			parseCodeTemplate = function(ele, handlers) {
 				var hds = handlers;
-				ele.children(".code-template").each(function() {
-					var $this = $(this);
-					var key = $this.attr("code-func");
+				var childCode = null;
+				while((childCode = qf(ele[0]))) {
+					var $child = $(childCode);
+					var key = $child.attr("code-func");
 					if(key) {
 						var cf = "_" + g_codeRef;
 						++g_codeRef;
-						hds[cf] = parseCodeTemplate($this, hds);
+						hds[cf] = parseCodeTemplate($(childCode), hds);
 						var ccode = "{{" + key + "-" + cf + "}}";
-						if($this.attr("tag-hlod")) {
-							$this.html(ccode);
+						if($child.hasClass("code-tag-hlod")) {
+							$child.html(ccode);
 						} else {
+							//							console.log(childCode)
+							//							console.log(childCode.parentNode);
 							//doc.createTextNode("{{"+key+"-"+cf+"}}");
 							//this.parentNode.replaceChild(this,doc.createTextNode("{{"+key+"-"+cf+"}}"));
-							this.parentNode.insertBefore(document.createTextNode("{{" + key + "-" + cf + "}}"), this);
+							childCode.parentNode.insertBefore(document.createTextNode("{{" + key + "-" + cf + "}}"), childCode);
 							//replaceChild(this,document.createTextNode("{{"+key+"-"+cf+"}}"));
-							$this.remove();
+							$child.remove();
 						}
 					}
-				});
+				}
 				var src = $.trim(ele.html());
-				console.log(src);
+				//				console.log(src);
 				var ret = [],
 					index = 0,
 					len = src.length,
@@ -1125,7 +1146,7 @@ function($) {
 							ret.push({
 								f: "_copy",
 								k: null,
-								pv: [src.substring(index, b)]
+								sv: [src.substring(index, b)]
 							});
 						}
 						if(e > ni) {
@@ -1135,7 +1156,6 @@ function($) {
 								pv: []
 							};
 							h.k = shlist[0];
-
 							if(shlist.length == 1) {
 								h.f = "toString";
 							} else {
@@ -1144,7 +1164,7 @@ function($) {
 									h.pv.push(shlist[i]);
 								}
 							}
-							h.pv.push(sh);
+							h.sv = sh;
 							ret.push(h);
 						}
 						index = e + 2;
@@ -1156,66 +1176,45 @@ function($) {
 					ret.push({
 						f: "_copy",
 						k: null,
-						pv: [src.substring(index, len)]
+						sv: [src.substring(index, len)]
 					});
 				}
-				return function(data) {
+				//data
+				return function(data, k, _index, pv, sv, hds) {
 					var r = [];
-						for(var i = 0; i < ret.length; ++i) {
-							var pa = [];
-							var h = ret[i];
-							pa.push(data);
-							pa.push(h.k);
-							if(h.pv && h.pv.length) {
-								for(var k = 0; k < h.pv.length; ++k) {
-									pa.push(h.pv[k]);
-								}
-							}
-							pa.push(hds);
-							h = hds[h.f] || hds["_def"];
-							r.push(h.apply(null, pa));
-						}
-					return r.join("");
-				}
-			},
-
-			hc_base_fnc = {
-				/**
-				 * def handler
-				 */
-				"_def": function() {
-					return "<!--" + arguments[arguments.length - 2].replace(reg_strikethrough_all, ' - ') + "-->";
-				},
-				/*toString   {{dKey[-privateArg]*}}       
-				 {{a-b-c-d-f}}
-				 dKey = 'a'
-				 privateArrgList is 'b','c','d','f'
-				 shellContext='a-b-c-d-f'
-				 handlers :{"b":function(data, dKey[,privateArgList...],  shellContext,handlers)}
-				 
-				 * */
-				"toString": function(data, dKey /*[,privateArgList...]*/ , shellContext, handlers) {
-					var v =data?data[dKey]:"";
-					return v ? v.toString() : (v === 0 ? "0" : (v === false ? "false" : ""));
-				},
-				"_copy": function(data, key, s) {
-					return s
-				},
-
-				"list": function(data, dKey, fn) {
-					var v =data?data[dKey]:[],
-						hds = arguments[arguments.length - 1],
-						r = [];
-					if(v && v.length) {
-						for(var i = 0; i < v.length; ++i) {
-							var h = hds[fn] || hds["_def"];
-							r.push(h(v[i]));
-						}
+					for(var i = 0; i < ret.length; ++i) {
+						var h = ret[i];
+						r.push((hds[h.f] || hds["_def"])(data, h.k, _index, h.pv, h.sv, hds));
+						//.apply({"data":data,"key":h.k,"index":_index,"hds":hds}, h.pv));
 					}
 					return r.join("");
 				}
 			},
-
+			hc_base_fnc = {
+				"_def": function(data, key, _index, pv, sv, hds) {
+					return "<!--" + sv.replace(reg_strikethrough_all, ' - ') + "-->";
+				},
+				"toString": function(data, key, _index, pv, sv, hds) {
+					var v = data[key];
+					return v ? v.toString() : (v === 0 ? "0" : (v === false ? "false" : ""));
+				},
+				"_copy": function(data, key, _index, pv, sv, hds) {
+					return sv
+				},
+				"list": function(data, key, _index, pv, sv, hds) {
+					var v = data[key] || [],
+						fn = pv[0],
+						r = [];
+					if(v && v.length) {
+						for(var i = 0; i < v.length; ++i) {
+							var h = hds[fn] || hds["_def"];
+							r.push(h(v[i], null, i, null, null, hds));
+						}
+					}
+					return r.join("");
+				},
+				"[]": function(data, key, _index, pv, sv, hds) { return _index + 1 }
+			},
 			HtmlCode = function(ele) {
 				this.ele = ele;
 				this.fnc = {};
@@ -1226,15 +1225,15 @@ function($) {
 
 		$.extend(HtmlCode.prototype, {
 			val: function(data) {
-					if(!this.hand) {
-						this.hand = parseCodeTemplate(this.ele, this.fnc, this.noHand);
-					}
-					this.ele.html(this.hand(data));
-					for(var i = 0; i < this.listener.length; ++i) {
-						if(CK_FALSE === this.listener[i].call(this, data)) return;
-					}
+				if(!this.hand) {
+					this.hand = parseCodeTemplate(this.ele, this.fnc);
+				}
+				this.ele.html(this.hand(data, null, -1, null, null, this.fnc));
+				for(var i = 0; i < this.listener.length; ++i) {
+					if(CK_FALSE === this.listener[i].call(this, data)) return;
+				}
 			},
-			empty:function(){
+			empty: function() {
 				this.ele.empty();
 			},
 			shell: function(name, func) {
@@ -1268,99 +1267,145 @@ function($) {
 	})();
 
 	(function() {
-		var DK_DATA_TABLE="dk_data_table",  DataTable = function(ele) {
-			this.ele = ele;
-			this.codeRef = ele.find(".dt-tpl").code();
-			this.formRef = ele.find(".dt-form").form();
-			this.uri=ele.attr("loadUri");
-			this.ele.data(DK_DATA_TABLE,this);
-			this.eh=true;
-		};		
-		$.extend(DataTable.prototype,{
-			load:function(clear){
+		var DK_DATA_TABLE = "dk_data_table",
+			DataTable = function(ele) {
+				this.ele = ele;
+				this.codeRef = ele.find(".dt-tpl").code();
+				this.formRef = ele.find(".dt-form").form();
+				this.uri = ele.attr("loadUri");
+				this.eh = true;
+				this.ele.data(DK_DATA_TABLE, this);
+
+			};
+		$.extend(DataTable.prototype, {
+			load: function() {
 				var qd = this.formRef.val();
-				if(qd===CK_FALSE) return;
-				if(clear)this.codeRef.empty();
+				if(qd === CK_FALSE) return;
+				if(this.ch) {
+					this.ch === true ? this.codeRef.empty() : this.ch();
+				}
 				var self = this;
-				util.get(self.uri,qd,function(data){
-					self.codeRef.val({"data":data,"length":data?data.length:0});
-				},self.eh);
+				util.get(self.uri, qd, function(data) {
+					self.codeRef.val({ "data": data, "length": data ? data.length : 0 });
+				}, self.eh);
 			},
-			error:function(eh){
-				this.eh =eh;
-			}
+			error: function(eh) {
+				this.eh = eh;
+			},
+			beforLoad: function(ch) { this.ch = ch }
 		});
-		var DataTablePlugin =function(){
+		var DataTablePlugin = function() {
 			if(this.length) {
 				var dt = $(this[0]);
 				var ret = dt.data(DK_DATA_TABLE);
 				if(!ret) {
-					ret = new DataTable(code);
+					ret = new DataTable(dt);
 				}
 				return ret;
 			}
 		}
-		$.fn.dg=DataTablePlugin;
+		$.fn.dg = DataTablePlugin;
 		$.fn.dg.Constructor = DataTable;
-		var DK_PAGE_DATA_TABLE="dk_page_data_table",
-			pdt_pager_builder = function(data){
-				
+		var DK_PAGE_DATA_TABLE = "dk_page_data_table",
+			pdt_pager_builder = function() {
+				if(this.total) {
+					var pages = Math.ceil(this.total / this.pageSize),
+						no = this.pageNo,
+						i = no - 2,
+						hc = [];
+					hc.push("<li class='");
+					if(no > 1) {
+						hc.push("active' no='" + (no - 1) + "'");
+					} else {
+						hc.push("disabled'");
+					}
+					hc.push("><a href='javascript:;'>«</a></li>");
+					hc.push("<li class='" + (no == 1 ? "curr'" : "active' no='1'") + "><a href='javascript:;'>1</a></li>");
+					if(no > 4) hc.push("<li><a href='javascript:;'>...</a></li>");
+					for(i = Math.max(2,no-2);i<no; ++i) {
+						hc.push("<li class='active' no='" + i + "'><a href='javascript:;'>" + i + "</a></li>");
+					}
+					if(no != 1) {
+						hc.push("<li class='curr'><a href='javascript:;'>" + no + "</a></li>");
+					}
+					i = no + 1;
+					var min = Math.min(pages, no + 3);
+					for(; i < min; ++i) {
+						hc.push("<li class='active' no='" + i + "'><a href='javascript:;'>" + i + "</a></li>");
+					}
+					if(pages - no > 3) hc.push("<li><a href='javascript:;'>...</a></li>");
+					if(pages != no) hc.push("<li class='active' no='" + pages + "'><a href='javascript:;'>" + pages + "</a></li>");
+					hc.push("<li class='");
+					if(no != pages) {
+						hc.push("active' no='" + (no + 1) + "'");
+					} else {
+						hc.push("disabled'");
+					}
+					hc.push("><a href='javascript:;'>»</a></li>");
+					this.pagerEle.html(hc.join(""));
+					var self = this;
+					this.pagerEle.children("li.active").on("click", function() {
+						self.goPage(parseInt($(this).attr("no")));
+					});
+				}
 			},
-		PageDataTable=function(ele){
-			this.ele = ele;
-			this.codeRef = ele.find(".dt-tpl").code();
-			this.formRef = ele.find(".dt-form").form();
-			this.pagerEle = ele.find(".dt-pager");
-			this.uri=ele.attr("loadUri");
-			this.pagerPrefix=ele.attr("pagerPrefix")?"_":"";
-			this.pageSize = parseInt(ele.attr("pageSize")||"1");
-			this.pageNo = parseInt(ele.attr("pageNo")||"10");
-			this.pagerBuilder = pdt_pager_builder;
-			this.ele.data(DK_PAGE_DATA_TABLE,this);
-			this.eh = true;
-		};
-		$.extend(PageDataTable.prototype,{
-			error:function(eh){this.eh = eh},
-			load:function(clear){
+			PageDataTable = function(ele) {
+				this.ele = ele;
+				this.codeRef = ele.find(".dt-tpl").code();
+				this.formRef = ele.find(".dt-form").form();
+				this.pagerEle = ele.find(".dt-pager");
+				this.uri = ele.attr("loadUri");
+				this.pagerPrefix = ele.attr("pagerPrefix") ? "_" : "";
+				this.pageSize = parseInt(ele.attr("pageSize") || "1");
+				this.pageNo = parseInt(ele.attr("pageNo") || "10");
+				this.ph = pdt_pager_builder;
+				this.ele.data(DK_PAGE_DATA_TABLE, this);
+				this.eh = true;
+			};
+		$.extend(PageDataTable.prototype, {
+			error: function(eh) { this.eh = eh },
+			beforLoad: function(ch) { this.ch = ch },
+			load: function() {
 				var qd = this.formRef.val();
-				if(qd===CK_FALSE) return;
-				this.cache = qd||{};
-				this.cache[this.pagerPrefix+"pageNo"]=this.pageNo;
-				this.cache[this.pagerPrefix+"pageSize"]=this.pageSize;
-				this.reload(clear);
+				if(qd === CK_FALSE) return;
+				this.cache = qd || {};
+				this.cache[this.pagerPrefix + "pageNo"] = this.pageNo;
+				this.cache[this.pagerPrefix + "pageSize"] = this.pageSize;
+				this.reload();
 			},
-			reload:function(clear){
-				if(clear)this.codeRef.empty();
+			reload: function() {
+				if(this.ch) {
+					this.ch === true ? (this.codeRef.empty() || this.pagerEle.empty()) : this.ch();
+				}
 				var self = this;
-				util.get(self.uri,this.cache,function(data){
-//					self.pageSize = data.pageSize;
-//					self.pageNo = data.pageNo;
-//					self.total = data.total;
-					data.length=data.data.length;
+				util.get(self.uri, this.cache, function(data) {
+					self.pageSize = data.pageSize;
+					self.pageNo = data.pageNo;
+					self.total = data.total;
+					data.length = data.data.length;
 					self.codeRef.val(data);
-					self.pagerBuilder(data);
-				},self.eh);
+					self.ph();
+				}, self.eh);
 			},
-			goPage:function(pageSize,pageNo){
-				this.cache[this.pagerPrefix+"pageNo"]=pageNo;
-				this.cache[this.pagerPrefix+"pageSize"]=pageSize;
-				this.reload(true);
-			}
+			goPage: function(pageSize, pageNo) {
+				this.cache[this.pagerPrefix + "pageNo"] = pageNo;
+				this.cache[this.pagerPrefix + "pageSize"] = pageSize;
+				this.reload();
+			},
+			buildPager: function(ph) { this.ph = ph }
 		});
-		var PageDataTablePlugin =function(){
+		var PageDataTablePlugin = function() {
 			if(this.length) {
 				var dt = $(this[0]);
-				var ret = dt.data(DK_DATA_TABLE);
+				var ret = dt.data(DK_PAGE_DATA_TABLE);
 				if(!ret) {
-					ret = new PageDataTable(code);
+					ret = new PageDataTable(dt);
 				}
 				return ret;
 			}
 		}
-		$.fn.pdg=PageDataTablePlugin;
+		$.fn.pdg = PageDataTablePlugin;
 		$.fn.pdg.Constructor = PageDataTable;
-		
-		
 	})();
 
 	(function() {
@@ -1483,7 +1528,7 @@ function($) {
 				if(model.css) spa_loadModelCss.call(this, model);
 				var ly = util.createModalLayer(model.html);
 				++spa_modal_index;
-				console.log(ly.ctn)
+				//				console.log(ly.ctn)
 				ly.ctn.addClass("spa-modal").addClass("spa-modal-index-" + spa_modal_index).attr("spa-model-id", model.id);
 				if(model.factory && model.factory.modal) {
 					model.factory.modal.call(this, data);
@@ -1499,7 +1544,7 @@ function($) {
 				delete this.res[model.id];
 				return m;
 			},
-			spa_afterLoadByMain = function(model,data) {
+			spa_afterLoadByMain = function(model, data) {
 				spa_showMainInternal.call(this, spa_cacheModel.call(this, model));
 			},
 			spa_afterLoadByModal = function(model, data) {
@@ -1637,7 +1682,7 @@ function($) {
 				this.menuUri = ele.attr("menu");
 				this.resUri = ele.attr("resource");
 				this.cache = {};
-				this.scriptCache ={};
+				this.scriptCache = {};
 			};
 
 		$.extend(SPA.prototype, {
