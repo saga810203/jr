@@ -270,6 +270,7 @@ function($) {
 			$.ajax({
 				type: method,
 				url: pUrl,
+				//cache: false,
 				data: pData,
 				contentType: method == "put" ? "application/json" : "application/x-www-form-urlencoded",
 			}).done(function(rd) {
@@ -312,7 +313,6 @@ function($) {
 		del: function(url, sh, eh) {
 			util.ajax("post", url, null, sh, eh);
 		},
-
 	};
 
 	//begin dropdown
@@ -437,6 +437,19 @@ function($) {
 			}
 			return CK_FALSE;
 		},
+		dict_display = function() {
+			$(".do-dict-display").each(function() {
+				var $this = $(this),
+					dictCode = $this.attr("dict");
+				if(dictCode) {
+					dict_apply(dictCode, function(dict) {
+						var dh = dict_get(dict, $this.attr("code"));
+						$this.html(dh ? dh : "");
+						$this.removeClass("do-dict-display");
+					});
+				}
+			});
+		},
 
 		//end dict
 
@@ -470,7 +483,18 @@ function($) {
 			}
 			ele.data(DK_FORM_VALUE, this);
 		},
-
+		Jtextarea = function(ele) {
+			this.name = ele.attr(AK_NAME) || ele.attr(AK_ID);
+			if(!this.name) {
+				throw "Attribute[name] is invalid";
+			}
+			this.trimed = ele.hasClass(CC_TRIM);
+			this.readOnly = ele.hasClass(CC_READONLY);
+			this.showOnly = ele.hasClass(CC_SHOWONLY);
+			this.ele = ele;
+			this.dv = ele.attr(AK_DEF_VAL) || "";
+			ele.data(DK_FORM_VALUE, this);
+		},
 		Jselect = function(ele) {
 			this.name = ele.attr(AK_NAME) || ele.attr(AK_ID);
 			if(!this.name) {
@@ -492,6 +516,7 @@ function($) {
 		},
 		select_change = function(select, code) {
 			if(select.codeEle.val() !== code) {
+				select.codeEle.val(code);
 				dict_apply(select.dictCode, function(dc) {
 					var cap = code ? dict_get(dc, code) : "";
 					select_display(select, cap ? code : null, cap);
@@ -510,12 +535,8 @@ function($) {
 			this.ele = ele;
 			this.dv = [];
 			var defV = ele.attr(AK_DEF_VAL);
-			if(defV) {
-				var strs = defV.split(",");
-				for(var i = 0; i < strs.length; ++i) {
-					var item = $.trim(strs[i]);
-					if(item) this.dv.push(item);
-				}
+			if(defV && defV != "[]") {
+				this.dv = JSON.parse(defV);
 			}
 			this.isTree = ele.hasClass(CC_TREE);
 			ele.data(DK_FORM_VALUE, this);
@@ -694,7 +715,7 @@ function($) {
 			this.nullVal = ele.attr("nullVal");
 			ele.data(DK_FORM_VALUE, this);
 		},
-		FORM_ITEM_CREATER = [Jhidden, Jtext, Jselect, Jmselect, Jdate, Jdatetime],
+		FORM_ITEM_CREATER = [Jhidden, Jtext, Jselect, Jmselect, Jdate, Jdatetime, Jtextarea],
 
 		serialize = function(obj, name, val, r) {
 			var ret = r || "";
@@ -749,13 +770,16 @@ function($) {
 			}
 		},
 		_version = "1.1";
-
+	util.dictDisplay = dict_display;
 	Jhidden.build = function(ele) {
 		return ele.hasClass(CC_HIDDEN) ? new Jhidden(ele) : CK_FALSE;
 	};
 	Jtext.build = function(ele) {
 		return ele.hasClass(CC_TEXT) ? new Jtext(ele) : CK_FALSE;
 	};
+	Jtextarea.build = function(ele) {
+		return ele.hasClass("textarea") ? new Jtextarea(ele) : CK_FALSE;
+	}
 	Jselect.build = function(ele) {
 		return ele.hasClass(CC_SELECT) ? new Jselect(ele) : CK_FALSE;
 	};
@@ -812,7 +836,11 @@ function($) {
 			}
 		},
 		reset: function() {
-			this.val(this.dv);
+			if(arguments.length) {
+				this.dv = arguments[0];
+			} else {
+				this.val(this.dv);
+			}
 		},
 		validate: function() {
 			//			var vtext = this.valEle.val();
@@ -823,6 +851,48 @@ function($) {
 			return true;
 		}
 	});
+	$.extend(Jtextarea.prototype, {
+		render: function() {
+			this.ele.empty();
+			if(this.showOnly) {
+				this.ele.html("");
+			} else {
+				this.valEle = $("<textarea></textarea>");
+				this.valEle.attr("rows", this.ele.attr("rows") || "3");
+				this.valEle.attr("cols", this.ele.attr("cols") || "20");
+				var tmp = this.ele.attr(AK_PLACEHOLDER);
+				if(tmp) this.valEle.attr(AK_PLACEHOLDER, tmp);
+				if(this.readOnly) this.valEle.prop(AK_READONLY, AK_READONLY);
+				this.valEle.appendTo(this.ele);
+			}
+			this.val(this.dv);
+		},
+		val: function(val) {
+			if(arguments.length) {
+				var ct = (val === null ? "" : ("" + val));
+				this.showOnly ? this.ele.text(ct) : this.valEle.val(ct);
+			} else if(!this.isShowOnly) {
+				var v = this.valEle.val();
+				return this.trimed ? $.trim(v) : v;
+			}
+		},
+		reset: function() {
+			if(arguments.length) {
+				this.dv = arguments[0];
+			} else {
+				this.val(this.dv);
+			}
+		},
+		validate: function() {
+			//			var vtext = this.valEle.val();
+			//			if(this.trimed && vtext) vtext = $.trim(vtext);
+			//			if(this.ele.attr(AK_REQUIRED)) {
+			//				if(!vtext) return "required";
+			//			}
+			return true;
+		}
+	});
+
 	$.extend(Jselect.prototype, {
 		render: function() {
 			var that = this;
@@ -854,7 +924,10 @@ function($) {
 			}
 		},
 		reset: function() {
-			select_change(this, this.dv);
+			if(arguments.length) {
+				var val = arguments[0];
+				this.dv = this.isBool ? (val ? "1" : "0") : (val ? val : "")
+			} else select_change(this, this.dv);
 		},
 		validate: function() {
 			return true;
@@ -904,7 +977,10 @@ function($) {
 			}
 		},
 		reset: function() {
-			mselect_change(this, this.dv);
+			if(arguments.length) {
+				var val = arguments[0];
+				this.dv = val ? val : [];
+			} else mselect_change(this, this.dv);
 		},
 		validate: returnTrue,
 		selectItem: function($item, evt) {
@@ -932,7 +1008,9 @@ function($) {
 			}
 		},
 		reset: function() {
-			date_change(this, this.dv);
+			if(arguments.length) {
+				this.dv = arguments[0];
+			} else date_change(this, this.dv);
 		},
 		validate: returnTrue,
 		show: function($ctn) {
@@ -1004,9 +1082,15 @@ function($) {
 			}
 			return CK_TRUE;
 		},
-		reset: function() {
-			for(var key in this.items) {
-				this.items[key].reset();
+		reset: function(data) {
+			if(data) {
+				for(var key in data) {
+					(this.items[key] || (this.items[key] = new Jhidden(key))).reset(data[key]);
+				}
+			} else {
+				for(var key in this.items) {
+					this.items[key].reset();
+				}
 			}
 			return this;
 		},
@@ -1213,7 +1297,10 @@ function($) {
 					}
 					return r.join("");
 				},
-				"[]": function(data, key, _index, pv, sv, hds) { return _index + 1 }
+				"[]": function(data, key, _index, pv, sv, hds) { return _index + 1 },
+				"json": function(data, key, _index, pv, sv, hds) {
+					return data ? (data[key] ? JSON.stringify(data[key]) : "") : "";
+				}
 			},
 			HtmlCode = function(ele) {
 				this.ele = ele;
@@ -1307,10 +1394,10 @@ function($) {
 		$.fn.dg = DataTablePlugin;
 		$.fn.dg.Constructor = DataTable;
 		var DK_PAGE_DATA_TABLE = "dk_page_data_table",
-			pdt_pager_builder = function() {
-				if(this.total) {
-					var pages = Math.ceil(this.total / this.pageSize),
-						no = this.pageNo,
+			pdt_pager_builder = function(data) {
+				if(data.total) {
+					var pages = Math.ceil(data.total / data.pageSize),
+						no = data.pageNo,
 						i = no - 2,
 						hc = [];
 					hc.push("<li class='");
@@ -1322,7 +1409,7 @@ function($) {
 					hc.push("><a href='javascript:;'>«</a></li>");
 					hc.push("<li class='" + (no == 1 ? "curr'" : "active' no='1'") + "><a href='javascript:;'>1</a></li>");
 					if(no > 4) hc.push("<li><a href='javascript:;'>...</a></li>");
-					for(i = Math.max(2,no-2);i<no; ++i) {
+					for(i = Math.max(2, no - 2); i < no; ++i) {
 						hc.push("<li class='active' no='" + i + "'><a href='javascript:;'>" + i + "</a></li>");
 					}
 					if(no != 1) {
@@ -1379,17 +1466,15 @@ function($) {
 				}
 				var self = this;
 				util.get(self.uri, this.cache, function(data) {
-					self.pageSize = data.pageSize;
-					self.pageNo = data.pageNo;
 					self.total = data.total;
 					data.length = data.data.length;
 					self.codeRef.val(data);
-					self.ph();
+					self.ph(data);
 				}, self.eh);
 			},
-			goPage: function(pageSize, pageNo) {
+			goPage: function( pageNo,pageSize) {
 				this.cache[this.pagerPrefix + "pageNo"] = pageNo;
-				this.cache[this.pagerPrefix + "pageSize"] = pageSize;
+				this.cache[this.pagerPrefix + "pageSize"] = (pageSize || this.cache[this.pagerPrefix + "pageSize"]);
 				this.reload();
 			},
 			buildPager: function(ph) { this.ph = ph }
@@ -1509,7 +1594,7 @@ function($) {
 						link.rel = 'stylesheet';
 						link.href = model.css;
 						link.media = 'all';
-						link.setAttibute("spa-css-ref", "1");
+						link.setAttribute("spa-css-ref", "1");
 						head.appendChild(link);
 					}
 				}
@@ -1538,7 +1623,7 @@ function($) {
 				var m = this.cache[model.id] = {};
 				m.html = model.html;
 				m.factory = model.factory;
-				m.css = m.css;
+				m.css = model.css;
 				m.id = model.id;
 				m.data = model.data;
 				delete this.res[model.id];

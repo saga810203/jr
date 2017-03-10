@@ -4,7 +4,7 @@
 		{
 			"id": "main1",
 			"uri": "model/main1.html",
-			"css": "",
+			"css": "css/model/main1.css",
 			"script": "js/model/main1.js"
 		}, {}
 	]
