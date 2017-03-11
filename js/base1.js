@@ -93,7 +93,7 @@ function($) {
 		TK_LI = "<li></li>",
 		TK_ICON = "<i class='icon'></i>",
 		TK_DD_DROP = "<div class='dd-drop'></div>",
-		TK_DD_HAND = "<a class='dd-hand' href='javascript:void(0)'><span></span><i class='icon'></i></a>",
+		TK_DD_HAND = "<a class='dd-hand' href='javascript:;'><i class='icon'></i></a>",
 		TK_HIDDEN_INPUT = "<input type='hidden' />",
 		doc = document,
 		head = doc.head || doc.getElementsByTagName(EN_HEAD)[0] || doc.documentElement,
@@ -738,6 +738,122 @@ function($) {
 			}
 			return ret;
 		},
+		g_form_uploader_file_ref =1;
+		upload_remove=function(form){
+			form.addClass("hide");
+			setTimeout(function(){form.remove();},1000);
+		},
+		upload_create=function(uploader){
+			var form,$form,finput,$file;
+			form = doc.createElement("form");
+			form.setAttribute("enctype","multipart/form-data");
+			finput = doc.createElement("input");
+			finput.setAttribute("type","file");
+			finput.setAttribute("name","filename");
+			if(uploader.accept)file.setAttribute("accept",uploader.accept);
+			form.appendChild(finput);
+			$form=$(form);
+			$file=$(finput);
+			$file.on("change",function(){
+				var files = finput.files,file,fsize,xhr,formData,eobj,state;
+				if(files.length){
+					file = files[0];
+					fsize = file.size;
+					if(uploader.maxSize && uploader.maxSize > fsize){
+						util.error("上传文件太大[size > "+fsize+"]");
+						return;
+					}
+					$file.off("change");
+					upload_remove($form);
+					upload_create(uploader);
+					var over=function(){
+						xhr.onerror = null;
+						xhr.onload = null;
+						xhr.ontimeout = null;
+						xhr.onabort = null;
+						if(xhr.upload) xhr.upload.onprogress= null;
+					},
+					af=function(){
+						if(!state){
+							xhr.abort();
+							raiseError("abort");
+						}
+					},
+					eContext={name:file.name,size:file.size,type:file.type,abort:af},
+					raiseError=function(er,data){
+						if(!state){
+							over();
+							state=er;
+							if(uploader.fail)uploader.fail.call(eContext,er,data);
+						}
+					},					
+					formData = new FormData(form);
+					xhr = new XMLHttpRequest();
+					xhr.onerror=function(){
+						raiseError("error");
+					};
+					xhr.onabort=function(){
+						raiseError("abort");
+					};
+					xhr.ontimeout=function(){
+						raiseError("timeout");
+					};
+					xhr.onload=function(){
+						if(!state){
+							if(xhr.status==200){
+								var ro,rs = xhr.responseText;
+								if(rs){
+									try{
+										ro = JSON.parse(rs);
+									}catch(err){
+										raiseError("parse",err);	
+									}
+									if(ro.success){
+										over();
+										state="done";
+										if(uploader.done)uploader.done.call(eContext,ro.data);
+									}else{
+										raiseError("logic",ro);	
+									}
+								}else{
+									raiseError("emptyResponseText");
+								}
+							}else{
+								raiseError("invalidHttpStatus",xhr.statusText);
+							}
+						}	
+					};
+					if(uploader.start)uploader.start.call(eContext);
+					xhr.open("POST",uploader.uri);
+					if(xhr.upload)xhr.upload.onprogress=function(event){
+						if(event.lengthComputable && uploader.notity){
+							uploader.notity.call(eContext,event.total,event.loaded);
+						}
+					};
+					if(uploader.timeout){
+						try{
+							xhr.timeout=uploader.timeout;
+						}catch(er){
+							setTimeout(function(){
+								raiseError("timeout");
+							},uploader.timeout);
+						}
+					}
+					xhr.send(formData);						
+				}
+			});
+		},
+		upload_def_fail_hanler=function(etype,ep){
+			util.error("upload error["+type+"]:"+(ep?JSON.stringify(ep):""));
+		},
+		Jupload=function(ele){
+			this.ele = ele;
+			this.maxSize =parseInt(ele.attr("fileMaxSize")||"1048576");
+			this.accept=ele.attr("accept");
+			this.uri=ele.attr("uri");		
+			this.fail=upload_def_fail_hanler;
+			ele.data(DK_FORM_VALUE,this);
+		},
 		Jform = function(ele) {
 			this.items = {};
 			var that = this;
@@ -751,6 +867,20 @@ function($) {
 					}
 				}
 			});
+		},
+		UploadPlugin=function(options){
+			if(this.length){
+				var ele = $(this[0]);
+				var ret= ele.data(DK_FORM_VALUE);
+				if(!ret){
+					ret = new Jupload(ele);
+					if(options){
+						$.extend(ret);
+					}
+					upload_create(ret);
+				}
+				return ret;
+			}
 		},
 		FormPlugin = function(val) {
 			if(this.length) {
@@ -769,7 +899,7 @@ function($) {
 				return ret;
 			}
 		},
-		_version = "1.1";
+		_version = "1.1",
 	util.dictDisplay = dict_display;
 	Jhidden.build = function(ele) {
 		return ele.hasClass(CC_HIDDEN) ? new Jhidden(ele) : CK_FALSE;
@@ -892,7 +1022,6 @@ function($) {
 			return true;
 		}
 	});
-
 	$.extend(Jselect.prototype, {
 		render: function() {
 			var that = this;
@@ -900,6 +1029,8 @@ function($) {
 			if(!this.ele.hasClass(CC_DROP_DOWN_CONTAINER)) this.ele.addClass(CC_DROP_DOWN_CONTAINER);
 			this.codeEle = $(TK_HIDDEN_INPUT).appendTo(this.ele);
 			this.captionEle = $(TK_SPAN).appendTo($(TK_DD_HAND).appendTo(this.ele));
+			var closeIcon =$("<i class='close'></i>");
+			this.captionEle.parent().append(closeIcon);
 			//this.ele.append(this.codeEle).append(this.captionEle);
 			select_change(this, this.dv);
 			if((!this.readOnly) && (!this.showOnly)) {
@@ -914,6 +1045,10 @@ function($) {
 					}
 				});
 			}
+			closeIcon.on("click",function(){
+				that.codeEle.val("");
+				that.captionEle.text("");
+			});
 		},
 		val: function(val) {
 			if(arguments.length) {
@@ -1168,6 +1303,8 @@ function($) {
 
 	$.fn.form = FormPlugin;
 	$.fn.form.Constructor = Jform;
+	$.fn.upload = UploadPlugin;
+	$.fn.upload = Jupload;
 	$.util = util;
 	(function() {
 		var DK_CODE_TEMPLATE_FUNC = "code_templat_func",
@@ -1352,7 +1489,6 @@ function($) {
 		$.fn.code = CodePlugin;
 		$.fn.code.Constructor = HtmlCode;
 	})();
-
 	(function() {
 		var DK_DATA_TABLE = "dk_data_table",
 			DataTable = function(ele) {

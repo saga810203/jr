@@ -2075,6 +2075,19 @@ a cite {
 .form-item.open > a.dd-hand > i.icon:before {
     content: '\e670';
 }
+.form-item > a.dd-hand >i.close{
+	position: absolute;
+    top: 5px;
+    right: 30px;
+    font-family:jIcon;
+    font-size:10px;
+}
+.form-item > a.dd-hand >span~i.close:before{
+	content:'\e652';
+}
+.form-item > a.dd-hand >span:empty~i.close:before{
+	content:'';
+}
 
 .form-item.mselect > a.dd-hand:before {
     display: inline-block;
