@@ -747,19 +747,23 @@ function($) {
 			var form,$form,finput,$file;
 			form = doc.createElement("form");
 			form.setAttribute("enctype","multipart/form-data");
+			form.setAttribute("class","upload-form");
+			form.setAttribute("testRef",""+(new Date()).getTime());
 			finput = doc.createElement("input");
 			finput.setAttribute("type","file");
 			finput.setAttribute("name","filename");
-			if(uploader.accept)file.setAttribute("accept",uploader.accept);
+			if(uploader.accept)finput.setAttribute("accept",uploader.accept);
 			form.appendChild(finput);
 			$form=$(form);
 			$file=$(finput);
 			$file.on("change",function(){
+				console.log("entry file change")
 				var files = finput.files,file,fsize,xhr,formData,eobj,state;
+				console.log("files.len="+files.length);
 				if(files.length){
 					file = files[0];
 					fsize = file.size;
-					if(uploader.maxSize && uploader.maxSize > fsize){
+					if(uploader.maxSize && uploader.maxSize < fsize){
 						util.error("上传文件太大[size > "+fsize+"]");
 						return;
 					}
@@ -842,17 +846,19 @@ function($) {
 					xhr.send(formData);						
 				}
 			});
+			$form.appendTo(uploader.ele);
 		},
 		upload_def_fail_hanler=function(etype,ep){
 			util.error("upload error["+type+"]:"+(ep?JSON.stringify(ep):""));
 		},
-		Jupload=function(ele){
-			this.ele = ele;
-			this.maxSize =parseInt(ele.attr("fileMaxSize")||"1048576");
-			this.accept=ele.attr("accept");
-			this.uri=ele.attr("uri");		
+		Jupload=function(pele){
+			this.ele = pele;
+			console.log(pele)
+			this.maxSize =parseInt(pele.attr("fileMaxSize")||"1048576");
+			this.accept=pele.attr("accept");
+			this.uri=pele.attr("uri");		
 			this.fail=upload_def_fail_hanler;
-			ele.data(DK_FORM_VALUE,this);
+			pele.data(DK_FORM_VALUE,this);
 		},
 		Jform = function(ele) {
 			this.items = {};
@@ -875,7 +881,7 @@ function($) {
 				if(!ret){
 					ret = new Jupload(ele);
 					if(options){
-						$.extend(ret);
+						$.extend(ret,options);
 					}
 					upload_create(ret);
 				}
@@ -1304,7 +1310,7 @@ function($) {
 	$.fn.form = FormPlugin;
 	$.fn.form.Constructor = Jform;
 	$.fn.upload = UploadPlugin;
-	$.fn.upload = Jupload;
+	$.fn.upload.Constructor = Jupload;
 	$.util = util;
 	(function() {
 		var DK_CODE_TEMPLATE_FUNC = "code_templat_func",

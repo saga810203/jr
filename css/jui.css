@@ -1847,16 +1847,16 @@ a cite {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
+    right:0;
+    bottom:0;
 }
 
 .layer-ctn {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
+    right:0;
+    bottom:0;
 }
 
 
@@ -1892,6 +1892,15 @@ a cite {
 
 .pull-right {
     float: right;
+}
+.centerModal{
+	position:absolute;
+	left:50%;
+	top:50%;
+	transform:translate(-50%,-50%);
+	max-height:90%;
+	max-width:90%;
+	background-color:#fff;
 }
 
 .nav {
@@ -2285,6 +2294,19 @@ a cite {
 .form-item.showOnly .select-caption div {
     display: none;
 }
+.upload-form input{
+	position:absolute;
+	top:0px;
+	left:0px;
+	right:0px;
+	right:0px;
+	z-index:10;
+	font-size:400px;
+	opacity:.01;
+	filter:Alpha(opacity=1);
+	cursor:pointer;
+}
+
 
 .table {
     width: 100%;

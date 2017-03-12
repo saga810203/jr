@@ -6,3 +6,30 @@
 	float: right;
 }*/
 
+
+.upload-btn{
+	position:relative;
+	display:inline-block;
+	vertical-align:middle;
+	min-width:60px;
+	height:38px;
+	border:1px solid #DFDFDF;
+	border-radius: 2px;
+	overflow:hidden;
+	background-color:#fff;
+	color:#666;
+	line-height:38px;
+}.upload-btn > span {
+	display:block;
+	margin:0 15px;
+	text-align:center;
+}
+.upload-btn>span:after{
+	display:table;
+	context:'';
+	clear:both;
+}
+.upload-btn > span > i.icon:before{
+	content:'\e61a';
+}
+
